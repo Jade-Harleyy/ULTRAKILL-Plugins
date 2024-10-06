@@ -9,8 +9,8 @@ namespace BetterWeaponHUDs
     [HarmonyPatch]
     internal static class Patches
     {
-        private static Vector2 speedometerPos = new(-79f, 590f);
-        private static Vector2 altSpeedometerPos = new(-79f, 190f);
+        private static readonly Vector2 speedometerPos = new(-79f, 590f);
+        private static readonly Vector2 altSpeedometerPos = new(-79f, 190f);
 
         [HarmonyPatch(typeof(HudController), nameof(HudController.Awake)), HarmonyPostfix]
         private static void HudController_Awake(HudController __instance)
