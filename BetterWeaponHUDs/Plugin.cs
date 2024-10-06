@@ -5,13 +5,13 @@ using UnityEngine;
 namespace BetterWeaponHUDs
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
-    public class Plugin : BaseUnityPlugin
+    internal class Plugin : BaseUnityPlugin
     {
-        public static AssetBundle assets;
+        public static readonly AssetBundle Assets = AssetBundle.LoadFromMemory(Properties.Resources.Assets);
 
         private void Awake()
         {
-            assets = AssetBundle.LoadFromMemory(Properties.Resources.Assets);
+            Settings.Initialize();
 
             new Harmony(PluginInfo.PLUGIN_GUID).PatchAll();
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
