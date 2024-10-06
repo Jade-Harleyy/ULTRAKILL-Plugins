@@ -35,12 +35,15 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\libs\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Addressables">
       <HintPath>..\libs\Unity.Addressables.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Unity.ResourceManager">
       <HintPath>..\libs\Unity.ResourceManager.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
 </Project>
