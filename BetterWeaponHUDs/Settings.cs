@@ -22,6 +22,9 @@ namespace BetterWeaponHUDs
         private static BoolField forceAltRailcannonCharge;
         public static bool ForceAltRailcannonCharge => forceAltRailcannonCharge.value;
 
+        private static BoolField fupAlert;
+        public static bool FUPAlert => fupAlert.value;
+
         internal static void Initialize()
         {
             PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
@@ -44,6 +47,9 @@ namespace BetterWeaponHUDs
             };
             forceAltRailcannonCharge = new(config.rootPanel, "FORCE ALTERNATE RAILCANNON DISPLAY", "force_alt_railcannon_charge", false) { interactable = !altIndicatorPosition.value };
             forceAltRailcannonCharge.postValueChangeEvent += _ => RailcannonMeter.Instance.CheckStatus();
+
+            new ConfigHeader(config.rootPanel, "OTHER");
+            fupAlert = new(config.rootPanel, "ROCKET WHIPLASH ALERT", "fup_alert", false);
         }
     }
 }
