@@ -27,10 +27,10 @@ namespace CGEnemyIcons
         {
             enemies = Resources.FindObjectsOfTypeAll<SpawnableObjectsDatabase>().SelectMany(db => db.enemies);
 
-            iconsCanvas = Object.Instantiate(Plugin.assets.LoadAsset<GameObject>("Enemy Icons"), CanvasController.Instance.transform.Find("Level Stats Controller"));
+            iconsCanvas = Object.Instantiate(Plugin.Assets.LoadAsset<GameObject>("Enemy Icons"), CanvasController.Instance.transform.Find("Level Stats Controller"));
             levelStats = CanvasController.Instance.transform.Find("Level Stats Controller/Level Stats (1)").gameObject;
 
-            iconPrefab = Plugin.assets.LoadAsset<GameObject>("Enemy Icon");
+            iconPrefab = Plugin.Assets.LoadAsset<GameObject>("Enemy Icon");
         }
 
         [HarmonyPatch(typeof(EndlessGrid), "SpawnOnGrid"), HarmonyPostfix]
@@ -71,7 +71,7 @@ namespace CGEnemyIcons
 
             foreach ((EnemyIdentifier eid, (EnemyCategory type, bool radiant, GameObject icon)) in icons)
             {
-                if (Config.hideCategories.Any(hiders => hiders.Key.self == type && hiders.Value.value && icons.Any(icon => !icon.Key.dead && icon.Value.type == hiders.Key.other)))
+                if (Settings.hideCategories.Any(hiders => hiders.Key.self == type && hiders.Value.value && icons.Any(icon => !icon.Key.dead && icon.Value.type == hiders.Key.other)))
                 {
                     icon.SetActive(false);
                     continue;
@@ -79,7 +79,7 @@ namespace CGEnemyIcons
 
                 icon.transform.Find("Dead").gameObject.SetActive(eid.dead);
                 icon.transform.Find("Idoled").gameObject.SetActive(eid.blessed);
-                switch (Config.showEnemies.FirstOrDefault(item => item.name == eid.FullName && item.type == type).field?.value, Config.onDeath.value)
+                switch (Settings.showEnemies.FirstOrDefault(item => item.name == eid.FullName && item.type == type).field?.value, Settings.onDeath.value)
                 {
                     case (FilterType.Off, _):
                         icon.SetActive(false);

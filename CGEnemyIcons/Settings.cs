@@ -24,16 +24,16 @@ namespace CGEnemyIcons
         Both = 3
     }
 
-    public static class Config
+    public static class Settings
     {
         public static EnumField<OnDeath> onDeath;
         public static List<(string name, EnemyCategory type, EnumField<FilterType> field)> showEnemies = [];
         public static Dictionary<(EnemyCategory self, EnemyCategory other), BoolField> hideCategories = [];
 
-        public static void Init()
+        internal static void Initialize()
         {
             PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
-            config.icon = Plugin.assets.LoadAsset<Sprite>("Icon");
+            config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
             onDeath = new(config.rootPanel, "Action on Death", "onDeath", OnDeath.Marker);
             onDeath.SetEnumDisplayNames("Cross Out", "Remove", "Remove if all Dead");
