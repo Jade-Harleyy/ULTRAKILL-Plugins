@@ -81,7 +81,7 @@ namespace BetterWeaponHUDs
         }
 
         [HarmonyPatch(typeof(HUDOptions), nameof(HUDOptions.WeaponIcon)), HarmonyPostfix]
-        private static void WeaponIcon(bool stuff)
+        private static void HUDOptions_WeaponIcon(bool stuff)
         {
             if (HudController.Instance?.speedometer.rect is RectTransform rect && stuff) { rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos; }
         }
