@@ -1,85 +1,85 @@
-﻿using PluginConfig.API;
+﻿using HarmonyLib;
+using JadeLib;
+using PluginConfig.API;
 using PluginConfig.API.Decorators;
 using PluginConfig.API.Fields;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using JadeLib;
 
 namespace CGEnemyIcons
 {
     public enum OnDeath
     {
-        Marker = 0,
-        Remove = 1,
-        RemoveIfAllDead = 2
+        Marker,
+        Remove,
+        RemoveIfAllDead
     }
 
     public enum FilterType
     {
-        Off = 0,
-        RadiantOnly = 1,
-        PreferRadiant = 2,
-        Both = 3
+        Both,
+        RadiantOnly,
+        PreferRadiant,
+        Off
     }
 
     public static class Settings
     {
-        public static EnumField<OnDeath> onDeath;
-        public static List<(string name, EnemyCategory type, EnumField<FilterType> field)> showEnemies = [];
-        public static Dictionary<(EnemyCategory self, EnemyCategory other), BoolField> hideCategories = [];
+        private static EnumField<OnDeath> onDeath;
+        public static OnDeath OnDeath => onDeath.value;
+
+        private static readonly Dictionary<EnumField<FilterType>, (string name, EnemyCategory type)> showEnemies = [];
+        public static IEnumerable<(FilterType filter, string name, EnemyCategory type)> ShowEnemies => showEnemies.Select(kvp => (kvp.Key.value, kvp.Value.name, kvp.Value.type));
+
+        private static readonly Dictionary<BoolField, (EnemyCategory self, EnemyCategory other)> hideCategories = [];
+        public static IEnumerable<(EnemyCategory self, EnemyCategory other)> HideCategories => hideCategories.Where(kvp => kvp.Key.value).Select(kvp => kvp.Value);
 
         internal static void Initialize()
         {
             PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
-            onDeath = new(config.rootPanel, "Action on Death", "onDeath", OnDeath.Marker);
-            onDeath.SetEnumDisplayNames("Cross Out", "Remove", "Remove if all Dead");
+            onDeath = new(config.rootPanel, "ACTION ON DEATH", "onDeath", OnDeath.Marker);
+            onDeath.SetEnumDisplayName(OnDeath.Marker, "CROSS OUT");
+            onDeath.SetEnumDisplayName(OnDeath.Remove, "REMOVE");
+            onDeath.SetEnumDisplayName(OnDeath.RemoveIfAllDead, "REMOVE IF ALL DEAD");
 
-            new ConfigHeader(config.rootPanel, "Enemy Types");
+            new ConfigHeader(config.rootPanel, "ENEMY TYPES");
             PrefabDatabase prefabs = Addressables.LoadAssetAsync<PrefabDatabase>("Assets/Data/Cyber Grind Patterns/Data/Prefab Database.asset").WaitForCompletion();
 
-            new ConfigHeader(config.rootPanel, "Common Enemies", 18);
-            CreateHiders(EnemyCategory.Commons);
-            foreach (EndlessEnemy enemy in prefabs.meleeEnemies)
+            AddEnemies(prefabs.meleeEnemies.Concat(prefabs.projectileEnemies), EnemyCategory.Common);
+            AddEnemies(prefabs.uncommonEnemies, EnemyCategory.Uncommon);
+            AddEnemies(prefabs.specialEnemies, EnemyCategory.Special);
+
+            CreateCategory(EnemyCategory.Mass, "HIDEOUS MASSES");
+            AddEnemy(prefabs.hideousMass, EnemyCategory.Mass);
+
+            void CreateCategory(EnemyCategory category, string categoryName)
             {
-                string name = enemy.prefab.GetComponentInChildren<EnemyIdentifier>(true).FullName;
-                showEnemies.Add((name, EnemyCategory.Commons, new(config.rootPanel, $"Show {name}", name, FilterType.Both)));
-            }
-            foreach (EndlessEnemy enemy in prefabs.projectileEnemies)
-            {
-                string name = enemy.prefab.GetComponentInChildren<EnemyIdentifier>(true).FullName;
-                showEnemies.Add((name, EnemyCategory.Commons, new(config.rootPanel, $"Show {name}", name, FilterType.Both)));
+                new ConfigHeader(config.rootPanel, categoryName, 18);
+                category.DoIf(T => T != category, T => hideCategories.Add(new(config.rootPanel, $"HIDE IF {T.Name().ToUpperInvariant()} ALIVE", $"hide{category.Name().ToLowerInvariant()}if{T.Name().ToLowerInvariant()}", false), (category, T)));
             }
 
-            new ConfigHeader(config.rootPanel, "Uncommon Enemies", 18);
-            CreateHiders(EnemyCategory.Uncommons);
-            foreach (EndlessEnemy enemy in prefabs.uncommonEnemies)
+            void AddEnemies(IEnumerable<EndlessEnemy> enemies, EnemyCategory category)
             {
-                string name = enemy.prefab.GetComponentInChildren<EnemyIdentifier>(true).FullName;
-                showEnemies.Add((name, EnemyCategory.Uncommons, new(config.rootPanel, $"Show {name}", name, FilterType.Both)));
+                CreateCategory(category, category.Name().ToUpperInvariant() + " ENEMIES");
+                enemies.Do(enemy => AddEnemy(enemy.prefab, category));
             }
 
-            new ConfigHeader(config.rootPanel, "Special Enemies", 18);
-            CreateHiders(EnemyCategory.Specials);
-            foreach (EndlessEnemy enemy in prefabs.specialEnemies)
+            void AddEnemy(GameObject enemy, EnemyCategory category)
             {
-                string name = enemy.prefab.GetComponentInChildren<EnemyIdentifier>(true).FullName;
-                showEnemies.Add((name, EnemyCategory.Specials, new(config.rootPanel, $"Show {name}", name, FilterType.Both)));
-            }
+                string name = enemy.GetComponentInChildren<EnemyIdentifier>(true).FullName;
 
-            new ConfigHeader(config.rootPanel, "Hideous Masses", 18);
-            CreateHiders(EnemyCategory.Masses);
-            string massName = prefabs.hideousMass.GetComponentInChildren<EnemyIdentifier>(true).FullName;
-            showEnemies.Add((massName, EnemyCategory.Masses, new(config.rootPanel, $"Show {massName}", massName, FilterType.Both)));
-            foreach (EnumField<FilterType> field in showEnemies.Select(i => i.field))
-            {
-                field.SetEnumDisplayNames("No", "Radiant Only", "Prefer Radiant", "Yes");
-            }
+                EnumField<FilterType> field = new(config.rootPanel, $"SHOW {name.ToUpperInvariant()}", name, FilterType.Both);
+                field.SetEnumDisplayName(FilterType.Both, "YES");
+                field.SetEnumDisplayName(FilterType.RadiantOnly, "RADIANT ONLY");
+                field.SetEnumDisplayName(FilterType.PreferRadiant, "PREFER RADIANT");
+                field.SetEnumDisplayName(FilterType.Off, "NO");
 
-            void CreateHiders(EnemyCategory self) => self.DoIf(T => T != self, T => hideCategories.Add((self, T), new(config.rootPanel, $"Hide if {T.Name()} Alive", $"hide{self.Name()}If{T.Name()}", false)));
+                showEnemies.Add(field, (name, category));
+            }
         }
     }
 }
