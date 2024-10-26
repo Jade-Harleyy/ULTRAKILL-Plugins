@@ -1,7 +1,7 @@
 ﻿using PluginConfig.API.Fields;
 using System;
 
-namespace JadeLib
+namespace JadeLib.PluginConfigurator
 {
     public static class PluginConfiguratorExtensions
     {
