@@ -85,5 +85,17 @@ namespace BetterWeaponHUDs
         {
             if (HudController.Instance?.speedometer.rect is RectTransform rect && stuff) { rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos; }
         }
+
+        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.rankIndex), MethodType.Setter), HarmonyPostfix]
+        private static void StyleHUD_set_rankIndex(StyleHUD __instance) => SetRankImage(__instance);
+
+        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.DescendRank)), HarmonyPostfix]
+        private static void StyleHUD_DescendRank(StyleHUD __instance) => SetRankImage(__instance);
+
+        private static void SetRankImage(StyleHUD __instance)
+        {
+            if (Settings.CustomStyleImages.Length <= __instance.rankIndex || Settings.CustomStyleImages[__instance.rankIndex] is not Sprite sprite) { return; }
+            __instance.rankImage.sprite = sprite;
+        }
     }
 }
