@@ -1,40 +1,39 @@
 ﻿using HarmonyLib;
+using JadeLib;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using JadeLib;
 
 namespace CGEnemyIcons
 {
     public enum EnemyCategory
     {
-        Commons = 0,
-        Uncommons = 1,
-        Specials = 2,
-        Masses = 3
+        Common,
+        Uncommon,
+        Special,
+        Mass
     }
 
     [HarmonyPatch]
     internal static class Patches
     {
-        public static IEnumerable<SpawnableObject> enemies;
-        public static GameObject iconsCanvas, iconPrefab, levelStats;
-        public static Dictionary<EnemyIdentifier, (EnemyCategory type, bool radiant, GameObject obj)> icons = [];
+        private static readonly IEnumerable<SpawnableObject> enemies = Resources.FindObjectsOfTypeAll<SpawnableObjectsDatabase>().SelectMany(db => db.enemies);
+        private static readonly GameObject iconPrefab = Plugin.Assets.LoadAsset<GameObject>("Enemy Icon");
+        private static GameObject iconsCanvas;
+        private static GameObject levelStats;
+        private static readonly Dictionary<EnemyIdentifier, (EnemyCategory type, bool radiant, GameObject obj)> icons = [];
 
         [HarmonyPatch(typeof(EndlessGrid), "Start"), HarmonyPostfix]
         private static void EndlessGrid_Start()
         {
-            enemies = Resources.FindObjectsOfTypeAll<SpawnableObjectsDatabase>().SelectMany(db => db.enemies);
-
-            iconsCanvas = Object.Instantiate(Plugin.assets.LoadAsset<GameObject>("Enemy Icons"), CanvasController.Instance.transform.Find("Level Stats Controller"));
-            levelStats = CanvasController.Instance.transform.Find("Level Stats Controller/Level Stats (1)").gameObject;
-
-            iconPrefab = Plugin.assets.LoadAsset<GameObject>("Enemy Icon");
+            iconsCanvas = Object.Instantiate(Plugin.Assets.LoadAsset<GameObject>("Enemy Icons"), CanvasController.Instance?.transform.Find("Level Stats Controller"));
+            levelStats = CanvasController.Instance?.transform.Find("Level Stats Controller/Level Stats (1)").gameObject;
+            icons.Clear();
         }
 
         [HarmonyPatch(typeof(EndlessGrid), "SpawnOnGrid"), HarmonyPostfix]
-        private static void EndlessGrid_SpawnOnGrid(GameObject obj, bool radiant, ref GameObject __result, PrefabDatabase ___prefabs)
+        private static void EndlessGrid_SpawnOnGrid(GameObject obj, bool radiant, GameObject __result, PrefabDatabase ___prefabs)
         {
             if (__result?.GetComponentInChildren<EnemyIdentifier>(true) is not EnemyIdentifier eid) return;
 
@@ -43,18 +42,18 @@ namespace CGEnemyIcons
             if (radiant) icon.transform.Find("Radiant").gameObject.SetActive(true);
             icon.name = eid.FullName;
 
-            EnemyCategory type = EnemyCategory.Commons;
+            EnemyCategory type = EnemyCategory.Common;
             if (___prefabs.uncommonEnemies.Any(prefab => prefab.prefab == obj))
             {
-                type = EnemyCategory.Uncommons;
+                type = EnemyCategory.Uncommon;
             }
             else if (___prefabs.specialEnemies.Any(prefab => prefab.prefab == obj))
             {
-                type = EnemyCategory.Specials;
+                type = EnemyCategory.Special;
             }
             else if (obj == ___prefabs.hideousMass)
             {
-                type = EnemyCategory.Masses;
+                type = EnemyCategory.Mass;
             }
             icons.Add(eid, (type, radiant, icon));
 
@@ -71,7 +70,7 @@ namespace CGEnemyIcons
 
             foreach ((EnemyIdentifier eid, (EnemyCategory type, bool radiant, GameObject icon)) in icons)
             {
-                if (Config.hideCategories.Any(hiders => hiders.Key.self == type && hiders.Value.value && icons.Any(icon => !icon.Key.dead && icon.Value.type == hiders.Key.other)))
+                if (eid == null || Settings.HideCategories.Any(hiders => hiders.self == type && icons.Any(icon => !icon.Key.dead && icon.Value.type == hiders.other)))
                 {
                     icon.SetActive(false);
                     continue;
@@ -79,7 +78,7 @@ namespace CGEnemyIcons
 
                 icon.transform.Find("Dead").gameObject.SetActive(eid.dead);
                 icon.transform.Find("Idoled").gameObject.SetActive(eid.blessed);
-                switch (Config.showEnemies.FirstOrDefault(item => item.name == eid.FullName && item.type == type).field?.value, Config.onDeath.value)
+                switch (Settings.ShowEnemies.FirstOrDefault(item => item.name == eid.FullName && item.type == type).filter, Settings.OnDeath)
                 {
                     case (FilterType.Off, _):
                         icon.SetActive(false);
@@ -100,15 +99,15 @@ namespace CGEnemyIcons
                         icon.SetActive(radiant || !AnyRadiantAlive());
                         break;
                     case (FilterType.PreferRadiant, OnDeath.RemoveIfAllDead):
-                        icon.SetActive(radiant && AnyRadiantAlive() || !radiant && !AnyRadiantAlive() && AnyAlive());
+                        icon.SetActive(radiant ? AnyRadiantAlive() : !AnyRadiantAlive() && AnyAlive());
                         break;
-                    case (null or FilterType.Both, OnDeath.Remove):
+                    case (FilterType.Both, OnDeath.Remove):
                         icon.SetActive(!eid.dead);
                         break;
-                    case (null or FilterType.Both, OnDeath.Marker):
+                    case (FilterType.Both, OnDeath.Marker):
                         icon.SetActive(true);
                         break;
-                    case (null or FilterType.Both, OnDeath.RemoveIfAllDead):
+                    case (FilterType.Both, OnDeath.RemoveIfAllDead):
                         icon.SetActive(AnyAlive());
                         break;
                 }
