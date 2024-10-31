@@ -97,5 +97,15 @@ namespace BetterWeaponHUDs
             if (Settings.CustomStyleImages.Length <= __instance.rankIndex || Settings.CustomStyleImages[__instance.rankIndex] is not Sprite sprite) { return; }
             __instance.rankImage.sprite = sprite;
         }
+
+        [HarmonyPatch(typeof(NewMovement), nameof(NewMovement.Update)), HarmonyPostfix]
+        private static void NewMovement_Update(NewMovement __instance)
+        {
+            if (!Settings.ViewmodelAcceleration) { __instance.hudCam.transform.localPosition = __instance.camOriginalPos; }
+            if (!Settings.HUDAcceleration) { __instance.screenHud.transform.localPosition = __instance.hudOriginalPos; }
+        }
+
+        [HarmonyPatch(typeof(WalkingBob), nameof(WalkingBob.Awake)), HarmonyPostfix]
+        private static void WalkingBob_Awake(WalkingBob __instance) => __instance.enabled = Settings.WalkingBob;
     }
 }

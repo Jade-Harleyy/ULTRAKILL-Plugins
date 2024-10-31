@@ -21,10 +21,7 @@ namespace BetterWeaponHUDs
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
-        private void Update()
-        {
-            FUPIndicator?.SetActive(Settings.FUPAlert && HookArm.Instance is { caughtGrenade: not null, returning: true });
-        }
+        private void Update() => FUPIndicator?.SetActive(Settings.FUPAlert && HookArm.Instance is { caughtGrenade: not null, returning: true });
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {

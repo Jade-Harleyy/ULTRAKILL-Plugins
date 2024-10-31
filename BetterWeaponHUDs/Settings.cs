@@ -11,12 +11,18 @@ namespace BetterWeaponHUDs
 {
     public static class Settings
     {
+        private static BoolField hudAcceleration;
+        public static bool HUDAcceleration => hudAcceleration.value;
+
+        #region Crosshair HUD
         private static BoolField useAlternateCrosshair;
         public static bool UseAlternateCrosshair => useAlternateCrosshair.value;
 
         private static BoolField showRailcannonCharge;
         public static bool ShowRailcannonCharge => showRailcannonCharge.value && RailcannonMeter.Instance.RailcannonStatus();
+        #endregion
 
+        #region Status HUD
         private static BoolField showHardDamageNumber;
         public static bool ShowHardDamageNumber => showHardDamageNumber.value;
 
@@ -25,25 +31,47 @@ namespace BetterWeaponHUDs
 
         private static BoolField forceAltRailcannonCharge;
         public static bool ForceAltRailcannonCharge => forceAltRailcannonCharge.value;
+        #endregion
 
+        #region Style HUD
+        public static readonly Sprite[] CustomStyleImages = new Sprite[8];
+        #endregion
+
+        #region Viewmodel
+        private static BoolField walkingBob;
+        public static bool WalkingBob => walkingBob.value;
+
+        private static BoolField viewmodelAcceleration;
+        public static bool ViewmodelAcceleration => viewmodelAcceleration.value;
+        #endregion
+
+        #region Other
         private static BoolField fupAlert;
         public static bool FUPAlert => fupAlert.value;
-
-        public static readonly Sprite[] CustomStyleImages = new Sprite[8];
+        #endregion
 
         internal static void Initialize()
         {
             PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
+            hudAcceleration = new(config.rootPanel, "HUD FOLLOWS SPEED", "hudacceleration", true);
+
+            #region Crosshair HUD
             new ConfigHeader(config.rootPanel, "CROSSHAIR HUD");
+
             useAlternateCrosshair = new(config.rootPanel, "ALTERNATE CROSSHAIR", "use_alt_crosshair", false);
             useAlternateCrosshair.postValueChangeEvent += _ => HUDOptions.Instance?.crosshair.CheckCrossHair();
-            showRailcannonCharge = new(config.rootPanel, "RAILCANNON CHARGE", "crosshair_rc_charge", false);
 
+            showRailcannonCharge = new(config.rootPanel, "RAILCANNON CHARGE", "crosshair_rc_charge", false);
+            #endregion
+
+            #region Status HUD
             new ConfigHeader(config.rootPanel, "STATUS HUD");
+
             showHardDamageNumber = new(config.rootPanel, "HARD DAMAGE INDICATOR", "show_hard_damage", false);
             showHardDamageNumber.postValueChangeEvent += _ => HudController.Instance?.CheckSituation();
+
             altIndicatorPosition = new(config.rootPanel, "ALTERNATE WEAPON ICON POSITION", "alt_equipped_indicator_pos", false);
             altIndicatorPosition.postValueChangeEvent += value =>
             {
@@ -51,10 +79,14 @@ namespace BetterWeaponHUDs
                 RailcannonMeter.Instance?.CheckStatus();
                 HudController.Instance?.CheckSituation();
             };
+
             forceAltRailcannonCharge = new(config.rootPanel, "FORCE ALTERNATE RAILCANNON DISPLAY", "force_alt_railcannon_charge", false) { interactable = !altIndicatorPosition.value };
             forceAltRailcannonCharge.postValueChangeEvent += _ => RailcannonMeter.Instance?.CheckStatus();
+            #endregion
 
+            #region Style HUD
             new ConfigHeader(config.rootPanel, "STYLE HUD");
+
             new ConfigHeader(config.rootPanel, "CUSTOM STYLE RANK IMAGES", 16);
             new ConfigHeader(config.rootPanel, "MUST BE THE FULL PATH TO A .PNG .JPG OR .EXF FILE\nLEAVE BLANK TO USE DEFAULT IMAGE", 12);
             for (int i = 0; i < 8; i++)
@@ -65,7 +97,6 @@ namespace BetterWeaponHUDs
                 StringField stringField = new(config.rootPanel, GenericExtensions.GetRankText(i, true), "customrankimages_" + i, "", true);
                 SpriteField spriteField = new(config.rootPanel);
                 stringField.postValueChangeEvent += SetSpriteFromPath;
-
                 SetSpriteFromPath(stringField.value);
 
                 void SetSpriteFromPath(string path)
@@ -94,9 +125,26 @@ namespace BetterWeaponHUDs
                     styleHUD.rankImage.sprite = spriteField.Sprite ?? styleHUD.ranks[index].sprite;
                 }
             }
+            #endregion
 
+            #region Viewmodel
+            new ConfigHeader(config.rootPanel, "VIEWMODEL");
+
+            walkingBob = new(config.rootPanel, "WALKING BOB", "walkingbob", true);
+            walkingBob.postValueChangeEvent += value =>
+            {
+                if (NewMovement.Instance?.GetComponentInChildren<WalkingBob>(true) is not WalkingBob walkingBob) { return; }
+                walkingBob.enabled = value;
+                walkingBob.transform.localPosition = Vector3.zero;
+            };
+
+            viewmodelAcceleration = new(config.rootPanel, "WEAPONS FOLLOW SPEED", "viewmodelacceleration", true);
+            #endregion
+
+            #region Other
             new ConfigHeader(config.rootPanel, "OTHER");
             fupAlert = new(config.rootPanel, "ROCKET WHIPLASH ALERT", "fup_alert", false);
+            #endregion
         }
     }
 }
