@@ -1,16 +1,20 @@
 ﻿using BepInEx;
 using JadeLib;
-using JadeLib.PluginConfigurator;
+using JadeLib.PluginConfigurator.Fields;
 using PluginConfig.API;
 using PluginConfig.API.Decorators;
 using PluginConfig.API.Fields;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace BetterWeaponHUDs
 {
     public static class Settings
     {
+        private static readonly string[] validExtensions = [".png", ".jpg", ".exf"];
+
+        #region HUD
         private static BoolField hudAcceleration;
         public static bool HUDAcceleration => hudAcceleration.value;
 
@@ -37,6 +41,12 @@ namespace BetterWeaponHUDs
         public static readonly Sprite[] CustomStyleImages = new Sprite[8];
         #endregion
 
+        #region Other
+        private static BoolField fupAlert;
+        public static bool FUPAlert => fupAlert.value;
+        #endregion
+        #endregion
+
         #region Viewmodel
         private static BoolField walkingBob;
         public static bool WalkingBob => walkingBob.value;
@@ -45,16 +55,12 @@ namespace BetterWeaponHUDs
         public static bool ViewmodelAcceleration => viewmodelAcceleration.value;
         #endregion
 
-        #region Other
-        private static BoolField fupAlert;
-        public static bool FUPAlert => fupAlert.value;
-        #endregion
-
         internal static void Initialize()
         {
             PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
+            #region HUD
             hudAcceleration = new(config.rootPanel, "HUD FOLLOWS SPEED", "hudacceleration", true);
 
             #region Crosshair HUD
@@ -94,12 +100,12 @@ namespace BetterWeaponHUDs
                 string prevValue = "";
                 int index = i;
 
-                StringField stringField = new(config.rootPanel, GenericExtensions.GetRankText(i, true), "customrankimages_" + i, "", true);
-                SpriteField spriteField = new(config.rootPanel);
-                stringField.postValueChangeEvent += SetSpriteFromPath;
-                SetSpriteFromPath(stringField.value);
+                StringField stringField = new(config.rootPanel, GenericExtensions.GetRankText(i), "customrankimages_" + i, "", true);
+                SpriteField spriteField = new(config.rootPanel, 100f);
+                stringField.postValueChangeEvent += TrySetSprite;
+                TrySetSprite(stringField.value);
 
-                void SetSpriteFromPath(string path)
+                void TrySetSprite(string path)
                 {
                     if (path.IsNullOrWhiteSpace())
                     {
@@ -109,7 +115,7 @@ namespace BetterWeaponHUDs
                     else
                     {
                         Texture2D texture = new(0, 0);
-                        if ((path.EndsWith(".png") || path.EndsWith(".jpg") || path.EndsWith(".exf")) && File.Exists(path) && texture.LoadImage(File.ReadAllBytes(path)))
+                        if (validExtensions.Any(path.EndsWith) && File.Exists(path) && texture.LoadImage(File.ReadAllBytes(path)))
                         {
                             prevValue = path;
                             spriteField.Sprite = Sprite.Create(texture, new(0f, 0f, texture.width, texture.height), new(0.5f, 0.5f));
@@ -127,6 +133,12 @@ namespace BetterWeaponHUDs
             }
             #endregion
 
+            #region Other
+            new ConfigHeader(config.rootPanel, "OTHER");
+            fupAlert = new(config.rootPanel, "ROCKET WHIPLASH ALERT", "fup_alert", false);
+            #endregion
+            #endregion
+
             #region Viewmodel
             new ConfigHeader(config.rootPanel, "VIEWMODEL");
 
@@ -139,11 +151,6 @@ namespace BetterWeaponHUDs
             };
 
             viewmodelAcceleration = new(config.rootPanel, "WEAPONS FOLLOW SPEED", "viewmodelacceleration", true);
-            #endregion
-
-            #region Other
-            new ConfigHeader(config.rootPanel, "OTHER");
-            fupAlert = new(config.rootPanel, "ROCKET WHIPLASH ALERT", "fup_alert", false);
             #endregion
         }
     }
