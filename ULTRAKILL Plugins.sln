@@ -20,7 +20,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoreCGEnemies", "MoreCGEnem
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "V3Mod", "V3Mod\V3Mod.csproj", "{C39F39DC-65A0-494E-AE3B-ED81CB5BAAB1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UltrapainMenuFix", "UltrapainFix\UltrapainMenuFix.csproj", "{FBF204F7-003E-4479-B6F1-DD49F72E53DD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UltrapainMenuFix", "UltrapainMenuFix\UltrapainMenuFix.csproj", "{5459E01B-80B2-4F98-84D1-BF228DB61628}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -56,10 +56,10 @@ Global
 		{C39F39DC-65A0-494E-AE3B-ED81CB5BAAB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C39F39DC-65A0-494E-AE3B-ED81CB5BAAB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C39F39DC-65A0-494E-AE3B-ED81CB5BAAB1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FBF204F7-003E-4479-B6F1-DD49F72E53DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FBF204F7-003E-4479-B6F1-DD49F72E53DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FBF204F7-003E-4479-B6F1-DD49F72E53DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FBF204F7-003E-4479-B6F1-DD49F72E53DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5459E01B-80B2-4F98-84D1-BF228DB61628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5459E01B-80B2-4F98-84D1-BF228DB61628}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5459E01B-80B2-4F98-84D1-BF228DB61628}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5459E01B-80B2-4F98-84D1-BF228DB61628}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
