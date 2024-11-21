@@ -2,6 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 namespace BetterWeaponHUDs
 {
@@ -21,7 +22,7 @@ namespace BetterWeaponHUDs
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
-        private void Update() => FUPIndicator?.SetActive(Settings.FUPAlert && HookArm.Instance is { caughtGrenade: not null, returning: true });
+        private void Update() => FUPIndicator?.SetActive(Settings.FUPAlert && HookArm.Instance is { returning: true } hookArm && hookArm.caughtObjects.Any(rb => rb != null && rb.TryGetComponent<Grenade>(out _)));
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
