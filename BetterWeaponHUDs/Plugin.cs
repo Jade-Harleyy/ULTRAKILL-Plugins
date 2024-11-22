@@ -1,8 +1,9 @@
 ﻿using BepInEx;
 using HarmonyLib;
+using JadeLib;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Linq;
 
 namespace BetterWeaponHUDs
 {
@@ -11,7 +12,7 @@ namespace BetterWeaponHUDs
     {
         public static readonly AssetBundle Assets = AssetBundle.LoadFromMemory(Properties.Resources.Assets);
 
-        private GameObject FUPIndicator;
+        private static GameObject FUPIndicator;
 
         private void Awake()
         {
@@ -28,7 +29,7 @@ namespace BetterWeaponHUDs
         {
             if (!FUPIndicator && GameObject.Find("/Canvas")?.transform is Transform canvasTF)
             {
-                FUPIndicator = Instantiate(Assets.LoadAsset<GameObject>("FUP Indicator"), canvasTF, false);
+                FUPIndicator = Assets.LoadAsset<GameObject>("FUP Indicator").Instantiate(canvasTF, false);
             }
         }
     }

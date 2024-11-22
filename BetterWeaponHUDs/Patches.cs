@@ -13,23 +13,41 @@ namespace BetterWeaponHUDs
         private static readonly Vector2 speedometerPos = new(-79f, 590f);
         private static readonly Vector2 altSpeedometerPos = new(-79f, 190f);
 
+        public static bool CrosshairHUDVisible => !HideUI.Active && !MapInfoBase.InstanceAnyType.hideStockHUD;
+
+        public static GameObject AltGunCanvas { get; private set; }
+        public static GameObject HardDamageNumber { get; private set; }
+
+        public static GameObject CrosshairRailcannonSlider { get; private set; }
+        public static Transform CrosshairFistIcon { get; private set; }
+        public static GameObject CrosshairWeaponIcon { get; private set; }
+
+        private static float PunchLastMaxCooldown = 1f;
+
         [HarmonyPatch(typeof(HudController), nameof(HudController.Awake)), HarmonyPostfix]
         private static void HudController_Awake(HudController __instance)
         {
-            Object.Instantiate(Plugin.Assets.LoadAsset<GameObject>("Gun Canvas"), __instance.transform, false);
-            __instance.textElements = __instance.textElements.AddToArray(Object.Instantiate(Plugin.Assets.LoadAsset<GameObject>("Hard Damage"), __instance.Find("GunCanvas/StatsPanel/Filler/Panel (2)/Filler"), false).GetComponent<TMP_Text>());
+            if (__instance.altHud) { return; }
+
+            if (!AltGunCanvas)
+            {
+                AltGunCanvas = Plugin.Assets.LoadAsset<GameObject>("Gun Canvas").Instantiate(__instance.transform, false);
+                SetIconParent(Settings.AltIndicatorPosition);
+            }
+
+            if (!HardDamageNumber)
+            {
+                HardDamageNumber = Plugin.Assets.LoadAsset<GameObject>("Hard Damage").Instantiate(__instance.Find("GunCanvas/StatsPanel/Filler/Panel (2)/Filler"), false);
+                __instance.textElements = __instance.textElements.AddToArray(HardDamageNumber.GetComponent<TMP_Text>());
+                HardDamageNumber.SetActive(Settings.HardDamageNumber);
+            }
         }
 
         [HarmonyPatch(typeof(HudController), nameof(HudController.CheckSituation)), HarmonyPostfix]
         private static void HudController_CheckSituation(HudController __instance)
         {
-            if (__instance.altHud) { return; }
-            if (__instance.speedometer?.rect is RectTransform rect && PrefsManager.Instance.GetBool("weaponIcons")) { rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos; }
-
-            Transform altCanvas = __instance.Find("Gun Canvas(Clone)");
-            altCanvas.SetActive(!HideUI.Active && PrefsManager.Instance.GetInt("hudType") == 1);
-            __instance.Find("GunCanvas/StatsPanel/Filler/Panel (2)/Filler/Hard Damage(Clone)")?.SetActive(Settings.ShowHardDamageNumber);
-            __instance.weaponIcon.SetParent(Settings.AltIndicatorPosition ? altCanvas : __instance.Find("GunCanvas"), false);
+            if (__instance.altHud || !AltGunCanvas) { return; }
+            AltGunCanvas.GetComponent<Canvas>().enabled = !HideUI.Active && PrefsManager.Instance.GetInt("hudType") == 1;
         }
 
         [HarmonyPatch(typeof(RailcannonMeter), nameof(RailcannonMeter.CheckStatus)), HarmonyPostfix]
@@ -44,50 +62,62 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(Crosshair), nameof(Crosshair.Start)), HarmonyPrefix]
         private static void Crosshair_Start(Crosshair __instance)
         {
-            Object.Instantiate(Plugin.Assets.LoadAsset<GameObject>("Railcannon Slider"), __instance.Find("PowerUpBar"), false);
-            RectTransform powerUpMeter = __instance.Find("PowerUpBar/HealthSliderAfterImage (2)") as RectTransform;
-            powerUpMeter.sizeDelta = new Vector2(50f, 50f);
-            powerUpMeter.GetComponent<Image>().fillClockwise = true;
-            powerUpMeter.GetComponent<Image>().fillOrigin = 4;
+            if (!CrosshairRailcannonSlider)
+            {
+                CrosshairRailcannonSlider = Plugin.Assets.LoadAsset<GameObject>("Railcannon Slider").Instantiate(__instance.Find("PowerUpBar"), false);
+                CrosshairRailcannonSlider.SetActive(Settings.CrosshairRailcannonCharge);
+
+                RectTransform powerUpMeter = __instance.FindAsRect("PowerUpBar/HealthSliderAfterImage (2)");
+                powerUpMeter.sizeDelta = new Vector2(50f, 50f);
+                powerUpMeter.GetComponent<Image>().fillClockwise = true;
+                powerUpMeter.GetComponent<Image>().fillOrigin = 4;
+            }
+
+            if (!CrosshairFistIcon)
+            {
+                GameObject crosshairFistObj = Plugin.Assets.LoadAsset<GameObject>("Fist Icon").Instantiate(__instance.transform, false);
+                FistControl.Instance.fistPanels = FistControl.Instance.fistPanels.AddToArray(crosshairFistObj);
+                (CrosshairFistIcon = crosshairFistObj.Find("Fill")).GetComponent<CopyImage>().imgToCopy = FistControl.Instance.fistIcon;
+                crosshairFistObj.SetActive(Settings.CrosshairFistIcon);
+            }
+
+            if (!CrosshairWeaponIcon)
+            {
+                if (!WeaponHUD.Instance) { Object.FindObjectOfType<WeaponHUD>()?.Awake(); }
+                CrosshairWeaponIcon = Plugin.Assets.LoadAsset<GameObject>("Weapon Icon").Instantiate(__instance.transform, false);
+                CrosshairWeaponIcon.SetActive(Settings.CrosshairWeaponIcon);
+            }
         }
 
         [HarmonyPatch(typeof(Crosshair), nameof(Crosshair.CheckCrossHair)), HarmonyPostfix]
         private static void Crosshair_CheckCrossHair(Crosshair __instance)
         {
-            if (!Settings.UseAlternateCrosshair) { return; }
+            if (!Settings.AlternateCrosshair) { return; }
             __instance.mainch.enabled = false;
             __instance.altchs.Do(image => image.enabled = true);
-        }
-
-        [HarmonyPatch(typeof(StatsManager), nameof(StatsManager.Update)), HarmonyPostfix]
-        private static void StatsManager_Update(StatsManager __instance)
-        {
-            if (__instance.crosshair?.Find("PowerUpBar/Railcannon Slider(Clone)")?.GetComponent<Image>() is not Image rcSlider) { return; }
-            if (!(rcSlider.enabled = Settings.ShowRailcannonCharge)) { return; }
-
-            rcSlider.fillAmount = Mathf.Lerp(0f, 0.5f, WeaponCharges.Instance.raicharge / 4f);
-            rcSlider.color = WeaponCharges.Instance.raicharge >= 5f ? ColorBlindSettings.Instance.railcannonFullColor : ColorBlindSettings.Instance.railcannonChargingColor;
         }
 
         [HarmonyPatch(typeof(PowerUpMeter), nameof(PowerUpMeter.UpdateMeter)), HarmonyPostfix]
         private static void PowerUpMeter_UpdateMeter(PowerUpMeter __instance)
         {
-            if (!Settings.ShowRailcannonCharge) { return; }
+            if (!CrosshairRailcannonSlider || !Settings.CrosshairRailcannonCharge) { return; }
+
+            Image rcSlider = CrosshairRailcannonSlider.GetComponent<Image>();
+            rcSlider.fillAmount = Mathf.Lerp(0f, 0.5f, WeaponCharges.Instance.raicharge / 4f);
+            rcSlider.color = WeaponCharges.Instance.raicharge >= 5f ? ColorBlindSettings.Instance.railcannonFullColor : ColorBlindSettings.Instance.railcannonChargingColor;
+
             __instance.meter.fillAmount /= 2f;
         }
 
         [HarmonyPatch(typeof(HUDOptions), nameof(HUDOptions.WeaponIcon)), HarmonyPostfix]
         private static void HUDOptions_WeaponIcon(bool stuff)
         {
-            if (stuff && HudController.Instance?.speedometer.rect is RectTransform rect) { rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos; }
+            if (stuff) { FixSpeedometer(); }
         }
 
-        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.rankIndex), MethodType.Setter), HarmonyPostfix]
-        private static void StyleHUD_set_rankIndex(StyleHUD __instance) => SetRankImage(__instance);
-
-        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.DescendRank)), HarmonyPostfix]
-        private static void StyleHUD_DescendRank(StyleHUD __instance) => SetRankImage(__instance);
-
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.rankIndex), MethodType.Setter)]
+        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.DescendRank))]
         private static void SetRankImage(StyleHUD __instance)
         {
             if (Settings.CustomStyleImages.Length <= __instance.rankIndex || Settings.CustomStyleImages[__instance.rankIndex] is not Sprite sprite) { return; }
@@ -97,11 +127,41 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(NewMovement), nameof(NewMovement.Update)), HarmonyPostfix]
         private static void NewMovement_Update(NewMovement __instance)
         {
-            if (!Settings.ViewmodelAcceleration) { __instance.hudCam.transform.localPosition = __instance.camOriginalPos; }
-            if (!Settings.HUDAcceleration) { __instance.screenHud.transform.localPosition = __instance.hudOriginalPos; }
+            if (!Settings.ViewmodelAcceleration)
+            {
+                __instance.hudCam.transform.localPosition = __instance.camOriginalPos;
+            }
+
+            if (!Settings.HUDAcceleration)
+            {
+                __instance.screenHud.transform.localPosition = __instance.hudOriginalPos;
+            }
         }
 
         [HarmonyPatch(typeof(WalkingBob), nameof(WalkingBob.Awake)), HarmonyPostfix]
         private static void WalkingBob_Awake(WalkingBob __instance) => __instance.enabled = Settings.WalkingBob;
+
+        [HarmonyPatch(typeof(FistControl), nameof(FistControl.Update)), HarmonyPostfix]
+        private static void FistControl_Update(FistControl __instance)
+        {
+            if (!CrosshairFistIcon) { return; }
+            CrosshairFistIcon.GetComponent<Image>().fillAmount = Settings.FistCooldown ? 1f - __instance.fistCooldown / PunchLastMaxCooldown : 1f;
+        }
+
+        [HarmonyPatch(typeof(Punch), nameof(Punch.PunchStart)), HarmonyPostfix]
+        private static void Punch_PunchStart(Punch __instance) => PunchLastMaxCooldown = __instance.fc.fistCooldown;
+
+        public static void SetIconParent(bool alt)
+        {
+            HudController.Instance?.weaponIcon.SetParent(alt ? AltGunCanvas : HudController.Instance.gunCanvas, false);
+            RailcannonMeter.Instance?.CheckStatus();
+            FixSpeedometer();
+        }
+
+        public static void FixSpeedometer()
+        {
+            if (!HudController.Instance) { return; }
+            HudController.Instance.speedometer.rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos;
+        }
     }
 }

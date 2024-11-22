@@ -1,40 +1,44 @@
-﻿using BepInEx;
-using JadeLib;
+﻿using JadeLib;
 using JadeLib.PluginConfigurator.Fields;
 using PluginConfig.API;
 using PluginConfig.API.Decorators;
 using PluginConfig.API.Fields;
-using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace BetterWeaponHUDs
 {
     public static class Settings
     {
-        private static readonly string[] validExtensions = [".png", ".jpg", ".exf"];
-
         #region HUD
         private static BoolField hudAcceleration;
         public static bool HUDAcceleration => hudAcceleration.value;
 
         #region Crosshair HUD
-        private static BoolField useAlternateCrosshair;
-        public static bool UseAlternateCrosshair => useAlternateCrosshair.value;
+        private static BoolField alternateCrosshair;
+        public static bool AlternateCrosshair => alternateCrosshair.value;
 
-        private static BoolField showRailcannonCharge;
-        public static bool ShowRailcannonCharge => showRailcannonCharge.value && RailcannonMeter.Instance.RailcannonStatus();
+        private static BoolField crosshairRailcannonCharge;
+        public static bool CrosshairRailcannonCharge => crosshairRailcannonCharge.value && RailcannonMeter.Instance.RailcannonStatus();
+
+        private static BoolField crosshairFistIcon;
+        public static bool CrosshairFistIcon => crosshairFistIcon.value;
+
+        private static BoolField crosshairWeaponIcon;
+        public static bool CrosshairWeaponIcon => crosshairWeaponIcon.value;
         #endregion
 
         #region Status HUD
-        private static BoolField showHardDamageNumber;
-        public static bool ShowHardDamageNumber => showHardDamageNumber.value;
+        private static BoolField hardDamageNumber;
+        public static bool HardDamageNumber => hardDamageNumber.value;
 
         private static BoolField altIndicatorPosition;
         public static bool AltIndicatorPosition => altIndicatorPosition.value;
 
         private static BoolField forceAltRailcannonCharge;
         public static bool ForceAltRailcannonCharge => forceAltRailcannonCharge.value;
+
+        private static BoolField fistCooldown;
+        public static bool FistCooldown => fistCooldown.value;
         #endregion
 
         #region Style HUD
@@ -66,28 +70,36 @@ namespace BetterWeaponHUDs
             #region Crosshair HUD
             new ConfigHeader(config.rootPanel, "CROSSHAIR HUD");
 
-            useAlternateCrosshair = new(config.rootPanel, "ALTERNATE CROSSHAIR", "use_alt_crosshair", false);
-            useAlternateCrosshair.postValueChangeEvent += _ => HUDOptions.Instance?.crosshair.CheckCrossHair();
+            alternateCrosshair = new(config.rootPanel, "ALTERNATE CROSSHAIR", "use_alt_crosshair", false);
+            alternateCrosshair.postValueChangeEvent += _ => HUDOptions.Instance?.crosshair.CheckCrossHair();
 
-            showRailcannonCharge = new(config.rootPanel, "RAILCANNON CHARGE", "crosshair_rc_charge", false);
+            crosshairRailcannonCharge = new(config.rootPanel, "RAILCANNON CHARGE", "crosshair_rc_charge", false);
+            crosshairRailcannonCharge.postValueChangeEvent += _ => Patches.CrosshairRailcannonSlider?.SetActive(CrosshairRailcannonCharge);
+
+            crosshairFistIcon = new(config.rootPanel, "FIST ICON", "crosshair_fist_icon", false);
+            crosshairFistIcon.postValueChangeEvent += value => Patches.CrosshairFistIcon?.parent.SetActive(value);
+
+            crosshairWeaponIcon = new(config.rootPanel, "WEAPON ICON", "crosshair_weapon_icon", false);
+            crosshairWeaponIcon.postValueChangeEvent += value => Patches.CrosshairWeaponIcon?.SetActive(value);
             #endregion
 
             #region Status HUD
             new ConfigHeader(config.rootPanel, "STATUS HUD");
 
-            showHardDamageNumber = new(config.rootPanel, "HARD DAMAGE INDICATOR", "show_hard_damage", false);
-            showHardDamageNumber.postValueChangeEvent += _ => HudController.Instance?.CheckSituation();
+            hardDamageNumber = new(config.rootPanel, "HARD DAMAGE INDICATOR", "show_hard_damage", false);
+            hardDamageNumber.postValueChangeEvent += value => Patches.HardDamageNumber?.SetActive(value);
 
             altIndicatorPosition = new(config.rootPanel, "ALTERNATE WEAPON ICON POSITION", "alt_equipped_indicator_pos", false);
             altIndicatorPosition.postValueChangeEvent += value =>
             {
                 forceAltRailcannonCharge.interactable = !value;
-                RailcannonMeter.Instance?.CheckStatus();
-                HudController.Instance?.CheckSituation();
+                Patches.SetIconParent(value);
             };
 
             forceAltRailcannonCharge = new(config.rootPanel, "FORCE ALTERNATE RAILCANNON DISPLAY", "force_alt_railcannon_charge", false) { interactable = !altIndicatorPosition.value };
             forceAltRailcannonCharge.postValueChangeEvent += _ => RailcannonMeter.Instance?.CheckStatus();
+
+            fistCooldown = new(config.rootPanel, "SHOW FIST COOLDOWN", "show_fist_cooldown", false);
             #endregion
 
             #region Style HUD
@@ -107,26 +119,20 @@ namespace BetterWeaponHUDs
 
                 void TrySetSprite(string path)
                 {
-                    if (path.IsNullOrWhiteSpace())
+                    Sprite sprite = ImageImporter.LoadFromFile(path, out ImageImporter.Error error);
+                    switch (error)
                     {
-                        prevValue = "";
-                        spriteField.Sprite = null;
-                    }
-                    else
-                    {
-                        Texture2D texture = new(0, 0);
-                        if (validExtensions.Any(path.EndsWith) && File.Exists(path) && texture.LoadImage(File.ReadAllBytes(path)))
-                        {
-                            prevValue = path;
-                            spriteField.Sprite = Sprite.Create(texture, new(0f, 0f, texture.width, texture.height), new(0.5f, 0.5f));
-                        }
-                        else
-                        {
+                        case ImageImporter.Error.NoError:
+                        case ImageImporter.Error.PathNullOrEmpty:
+                            prevValue = path ?? "";
+                            break;
+                        case ImageImporter.Error.FileMissing:
+                        case ImageImporter.Error.FailedToLoad:
                             stringField.value = prevValue;
-                        }
+                            return;
                     }
 
-                    CustomStyleImages[index] = spriteField.Sprite;
+                    CustomStyleImages[index] = spriteField.Sprite = sprite;
                     if (StyleHUD.Instance is not StyleHUD styleHUD || index == styleHUD.rankIndex) { return; }
                     styleHUD.rankImage.sprite = spriteField.Sprite ?? styleHUD.ranks[index].sprite;
                 }
