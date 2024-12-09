@@ -36,6 +36,10 @@
       <HintPath>..\libs\PluginConfigurator.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PluginConfiguratorComponents">
+      <HintPath>..\libs\PluginConfiguratorComponents.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\libs\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>

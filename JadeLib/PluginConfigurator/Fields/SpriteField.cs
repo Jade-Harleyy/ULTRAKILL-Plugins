@@ -26,7 +26,7 @@ namespace JadeLib.PluginConfigurator.Fields
             fieldHeight = height;
         }
 
-        protected override void OnCreateUI(RectTransform fieldUI)
+        public override void OnCreateUI(RectTransform fieldUI)
         {
             image = fieldUI.AddComponent<Image>();
             image.preserveAspect = true;

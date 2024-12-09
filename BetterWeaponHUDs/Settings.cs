@@ -1,4 +1,9 @@
-﻿using JadeLib;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using BepInEx;
+using HarmonyLib;
+using JadeLib;
 using JadeLib.PluginConfigurator.Fields;
 using PluginConfig.API;
 using PluginConfig.API.Decorators;
@@ -43,6 +48,10 @@ namespace BetterWeaponHUDs
 
         #region Style HUD
         public static readonly Sprite[] CustomStyleImages = new Sprite[8];
+
+        private const string DefaultStyleGUID = PluginInfo.PLUGIN_GUID + "_stylebonusdefault_";
+        private static ConfigDivision customStyleBonusesDivision;
+        private static readonly HashSet<string> registeredStyleIDs = [];
         #endregion
 
         #region Other
@@ -59,7 +68,7 @@ namespace BetterWeaponHUDs
         public static bool ViewmodelAcceleration => viewmodelAcceleration.value;
         #endregion
 
-        internal static void Initialize()
+        internal static void Initialize(Plugin plugin)
         {
             PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
@@ -133,9 +142,22 @@ namespace BetterWeaponHUDs
                     }
 
                     CustomStyleImages[index] = spriteField.Sprite = sprite;
-                    if (StyleHUD.Instance is not StyleHUD styleHUD || index == styleHUD.rankIndex) { return; }
+                    if (StyleHUD.Instance is not { } styleHUD || index == styleHUD.rankIndex) { return; }
                     styleHUD.rankImage.sprite = spriteField.Sprite ?? styleHUD.ranks[index].sprite;
                 }
+            }
+
+            new ConfigHeader(config.rootPanel, "CUSTOM STYLE BONUSES", 16);
+            new ConfigHeader(config.rootPanel, "NEW STYLE BONUSES ARE AUTOMATICALLY REGISTERED WHEN ENCOUNTERED\nKEEP PLAYING TO FIND ADDITIONAL STYLE BONUSES", 12);
+            customStyleBonusesDivision = new(config.rootPanel, "customstylebonuses");
+            plugin.StartCoroutine(AddStyleBonuses());
+            static IEnumerator AddStyleBonuses()
+            {
+                yield return new WaitUntil(() => StyleHUD.Instance && PrefsManager.Instance);
+                PrefsManager.Instance.localPrefMap.DoIf(pair => pair.Key.StartsWith(DefaultStyleGUID), pair =>
+                {
+                    AddStyleBonusEntry(pair.Key.Substring(DefaultStyleGUID.Length));
+                });
             }
             #endregion
 
@@ -151,13 +173,34 @@ namespace BetterWeaponHUDs
             walkingBob = new(config.rootPanel, "WALKING BOB", "walkingbob", true);
             walkingBob.postValueChangeEvent += value =>
             {
-                if (NewMovement.Instance?.GetComponentInChildren<WalkingBob>(true) is not WalkingBob walkingBob) { return; }
-                walkingBob.enabled = value;
-                walkingBob.transform.localPosition = Vector3.zero;
+                if (NewMovement.Instance?.GetComponentInChildren<WalkingBob>(true) is not { } bob) { return; }
+                bob.enabled = value;
+                bob.transform.localPosition = Vector3.zero;
             };
 
             viewmodelAcceleration = new(config.rootPanel, "WEAPONS FOLLOW SPEED", "viewmodelacceleration", true);
             #endregion
+        }
+
+        public static void AddStyleBonusEntry(string id, string defaultValue = null)
+        {
+            if (!registeredStyleIDs.Add(id)) { return; }
+
+            if (defaultValue == null)
+            {
+                defaultValue = PrefsManager.Instance.GetStringLocal(DefaultStyleGUID + id, id);
+            }
+            else
+            {
+                PrefsManager.Instance.SetStringLocal(DefaultStyleGUID + id, defaultValue);
+            }
+            
+            StringField stringField = new(customStyleBonusesDivision, defaultValue.IsNullOrWhiteSpace() ? id : defaultValue, "customstylebonus_" + id, defaultValue, true);
+            stringField.postValueChangeEvent += SetStyleBonusText;
+            SetStyleBonusText(stringField.value);
+            customStyleBonusesDivision.fields = customStyleBonusesDivision.fields.OrderBy(field => field.displayName).ToList();
+            
+            void SetStyleBonusText(string text) => StyleHUD.Instance.idNameDict.TrySetValue(id, text, true);
         }
     }
 }

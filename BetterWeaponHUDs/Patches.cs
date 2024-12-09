@@ -13,9 +13,7 @@ namespace BetterWeaponHUDs
         private static readonly Vector2 speedometerPos = new(-79f, 590f);
         private static readonly Vector2 altSpeedometerPos = new(-79f, 190f);
 
-        public static bool CrosshairHUDVisible => !HideUI.Active && !MapInfoBase.InstanceAnyType.hideStockHUD;
-
-        public static GameObject AltGunCanvas { get; private set; }
+        private static GameObject AltGunCanvas { get; set; }
         public static GameObject HardDamageNumber { get; private set; }
 
         public static GameObject CrosshairRailcannonSlider { get; private set; }
@@ -68,7 +66,7 @@ namespace BetterWeaponHUDs
                 CrosshairRailcannonSlider.SetActive(Settings.CrosshairRailcannonCharge);
 
                 RectTransform powerUpMeter = __instance.FindAsRect("PowerUpBar/HealthSliderAfterImage (2)");
-                powerUpMeter.sizeDelta = new Vector2(50f, 50f);
+                powerUpMeter.sizeDelta = new(50f, 50f);
                 powerUpMeter.GetComponent<Image>().fillClockwise = true;
                 powerUpMeter.GetComponent<Image>().fillOrigin = 4;
             }
@@ -120,7 +118,7 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.DescendRank))]
         private static void SetRankImage(StyleHUD __instance)
         {
-            if (Settings.CustomStyleImages.Length <= __instance.rankIndex || Settings.CustomStyleImages[__instance.rankIndex] is not Sprite sprite) { return; }
+            if (Settings.CustomStyleImages.Length <= __instance.rankIndex || Settings.CustomStyleImages[__instance.rankIndex] is not { } sprite) { return; }
             __instance.rankImage.sprite = sprite;
         }
 
@@ -147,10 +145,16 @@ namespace BetterWeaponHUDs
             if (!CrosshairFistIcon) { return; }
             CrosshairFistIcon.GetComponent<Image>().fillAmount = Settings.FistCooldown ? 1f - __instance.fistCooldown / PunchLastMaxCooldown : 1f;
         }
-
+        
         [HarmonyPatch(typeof(Punch), nameof(Punch.PunchStart)), HarmonyPostfix]
         private static void Punch_PunchStart(Punch __instance) => PunchLastMaxCooldown = __instance.fc.fistCooldown;
-
+        
+        [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.GetLocalizedName)), HarmonyPostfix]
+        private static void StyleHUD_GetLocalizedName(string id, string __result)
+        {
+            Settings.AddStyleBonusEntry(id, __result);
+        }
+        
         public static void SetIconParent(bool alt)
         {
             HudController.Instance?.weaponIcon.SetParent(alt ? AltGunCanvas : HudController.Instance.gunCanvas, false);
@@ -158,7 +162,7 @@ namespace BetterWeaponHUDs
             FixSpeedometer();
         }
 
-        public static void FixSpeedometer()
+        private static void FixSpeedometer()
         {
             if (!HudController.Instance) { return; }
             HudController.Instance.speedometer.rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos;

@@ -4,7 +4,7 @@ namespace JadeLib
 {
     public static class EnumExtensions
     {
-        public static void DoIf<T>(this T _, Predicate<T> condition, Action<T> action) where T : Enum
+        public static void DoIf<T>(this T _, Func<T, bool> condition, Action<T> action) where T : Enum
         {
             foreach (T value in Enum.GetValues(typeof(T)))
             {
