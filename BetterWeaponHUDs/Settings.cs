@@ -33,25 +33,25 @@ namespace BetterWeaponHUDs
 
         internal static void Initialize()
         {
-            PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
+            PluginConfigurator config = PluginConfigurator.Create(MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_GUID);
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
             new ConfigHeader(config.rootPanel, "CROSSHAIR HUD");
-            useAlternateCrosshair = new(config.rootPanel, "ALTERNATE CROSSHAIR", "use_alt_crosshair", false);
-            useAlternateCrosshair.postValueChangeEvent += _ => HUDOptions.Instance?.crosshair.CheckCrossHair();
-            showRailcannonCharge = new(config.rootPanel, "RAILCANNON CHARGE", "crosshair_rc_charge", false);
+            useAlternateCrosshair = new BoolField(config.rootPanel, "ALTERNATE CROSSHAIR", "use_alt_crosshair", false);
+            useAlternateCrosshair.postValueChangeEvent += _ => CanvasController.Instance?.crosshair.CheckCrossHair();
+            showRailcannonCharge = new BoolField(config.rootPanel, "RAILCANNON CHARGE", "crosshair_rc_charge", false);
 
             new ConfigHeader(config.rootPanel, "STATUS HUD");
-            showHardDamageNumber = new(config.rootPanel, "HARD DAMAGE INDICATOR", "show_hard_damage", false);
+            showHardDamageNumber = new BoolField(config.rootPanel, "HARD DAMAGE INDICATOR", "show_hard_damage", false);
             showHardDamageNumber.postValueChangeEvent += _ => HudController.Instance?.CheckSituation();
-            altIndicatorPosition = new(config.rootPanel, "ALTERNATE WEAPON ICON POSITION", "alt_equipped_indicator_pos", false);
+            altIndicatorPosition = new BoolField(config.rootPanel, "ALTERNATE WEAPON ICON POSITION", "alt_equipped_indicator_pos", false);
             altIndicatorPosition.postValueChangeEvent += value =>
             {
                 forceAltRailcannonCharge.interactable = !value;
                 RailcannonMeter.Instance?.CheckStatus();
                 HudController.Instance?.CheckSituation();
             };
-            forceAltRailcannonCharge = new(config.rootPanel, "FORCE ALTERNATE RAILCANNON DISPLAY", "force_alt_railcannon_charge", false) { interactable = !altIndicatorPosition.value };
+            forceAltRailcannonCharge = new BoolField(config.rootPanel, "FORCE ALTERNATE RAILCANNON DISPLAY", "force_alt_railcannon_charge", false) { interactable = !altIndicatorPosition.value };
             forceAltRailcannonCharge.postValueChangeEvent += _ => RailcannonMeter.Instance?.CheckStatus();
 
             new ConfigHeader(config.rootPanel, "STYLE HUD");
@@ -96,7 +96,7 @@ namespace BetterWeaponHUDs
             }
 
             new ConfigHeader(config.rootPanel, "OTHER");
-            fupAlert = new(config.rootPanel, "ROCKET WHIPLASH ALERT", "fup_alert", false);
+            fupAlert = new BoolField(config.rootPanel, "ROCKET WHIPLASH ALERT", "fup_alert", false);
         }
     }
 }

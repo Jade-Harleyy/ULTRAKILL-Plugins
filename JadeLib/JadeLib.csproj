@@ -1,22 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>JadeLib</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+  
   <ItemGroup>
-    <Compile Remove="lib\**" />
-    <EmbeddedResource Remove="lib\**" />
-    <None Remove="lib\**" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.29" IncludeAssets="compile"/>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="UnityEngine.Modules" Version="2019.4.40">
-      <PrivateAssets></PrivateAssets>
-      <IncludeAssets>compile</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+  
   <ItemGroup>
     <Reference Include="PluginConfigurator">
       <HintPath>..\libs\PluginConfigurator.dll</HintPath>
@@ -27,4 +21,8 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="mkdir &quot;$(TargetDir)$(TargetName) (Dev)&quot;&#xA;copy &quot;$(ProjectDir)Assets\*&quot; &quot;$(TargetDir)$(TargetName) (Dev)&quot;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)$(TargetName) (Dev)\$(TargetFileName)&quot;&#xA;powershell -Command &quot;(gc '$(TargetDir)$(TargetName) (Dev)\manifest.json') -replace '{Version}', '$(Version)' | Out-File '$(TargetDir)$(TargetName) (Dev)\manifest.json'&quot;&#xA;powershell Compress-Archive -Force -Path '$(TargetDir)$(TargetName) (Dev)/*' -DestinationPath '$(TargetDir)$(TargetName).zip'" />
+  </Target>
 </Project>

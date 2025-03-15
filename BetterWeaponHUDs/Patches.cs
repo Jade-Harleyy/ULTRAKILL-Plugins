@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using SettingsMenu.Components.Pages;
 using TMPro;
 using ULTRAKILL.Cheats;
 using UnityEngine;
@@ -80,10 +81,11 @@ namespace BetterWeaponHUDs
             __instance.meter.fillAmount /= 2f;
         }
 
-        [HarmonyPatch(typeof(HUDOptions), nameof(HUDOptions.WeaponIcon)), HarmonyPostfix]
-        private static void HUDOptions_WeaponIcon(bool stuff)
+        [HarmonyPatch(typeof(HUDSettings), nameof(HUDSettings.OnPrefChanged)), HarmonyPostfix]
+        private static void HUDSettings_OnPrefChanged(string key, object value)
         {
-            if (HudController.Instance?.speedometer.rect is RectTransform rect && stuff) { rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos; }
+            if (key != "weaponIcons") { return; }
+            if (HudController.Instance?.speedometer.rect is RectTransform rect && (bool)value) { rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos; }
         }
 
         [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.rankIndex), MethodType.Setter), HarmonyPostfix]

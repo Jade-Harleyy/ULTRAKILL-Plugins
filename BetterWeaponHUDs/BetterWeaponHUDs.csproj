@@ -1,30 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>BetterWeaponHUDs</AssemblyName>
-    <Version>1.3.0</Version>
+    <Version>1.4.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-    <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
-    <PackageReference Include="UnityEngine.Modules" Version="2019.4.40" IncludeAssets="compile" />
-  </ItemGroup>
-  
-  <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.29" IncludeAssets="compile" />
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\JadeLib\JadeLib.csproj">
-      <Private>False</Private>
-      <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
-    </ProjectReference>
+    <ProjectReference Include="..\JadeLib\JadeLib.csproj" Private="false"/>
   </ItemGroup>
   
   <ItemGroup>
@@ -46,18 +37,7 @@
     </Reference>
   </ItemGroup>
   
-  <ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="mkdir &quot;$(TargetDir)$(TargetName) (Dev)&quot;&#xA;copy &quot;$(ProjectDir)Assets\*&quot; &quot;$(TargetDir)$(TargetName) (Dev)&quot;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)$(TargetName) (Dev)\$(TargetFileName)&quot;&#xA;powershell -Command &quot;(gc '$(TargetDir)$(TargetName) (Dev)\manifest.json') -replace '{Version}', '$(Version)' | Out-File '$(TargetDir)$(TargetName) (Dev)\manifest.json'&quot;&#xA;powershell Compress-Archive -Force -Path '$(TargetDir)$(TargetName) (Dev)/*' -DestinationPath '$(TargetDir)$(TargetName).zip'" />
+  </Target>
 </Project>

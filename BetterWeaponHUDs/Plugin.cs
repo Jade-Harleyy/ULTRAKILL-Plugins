@@ -1,14 +1,17 @@
-﻿using BepInEx;
+﻿using System.IO;
+using System.Reflection;
+using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace BetterWeaponHUDs
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     internal class Plugin : BaseUnityPlugin
     {
-        public static readonly AssetBundle Assets = AssetBundle.LoadFromMemory(Properties.Resources.Assets);
+        private static string ModDir => Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static readonly AssetBundle Assets = AssetBundle.LoadFromFile(Path.Combine(ModDir, "betterweaponhuds.bundle"));
 
         private GameObject FUPIndicator;
 
@@ -17,8 +20,8 @@ namespace BetterWeaponHUDs
             Settings.Initialize();
             SceneManager.sceneLoaded += OnSceneLoaded;
 
-            new Harmony(PluginInfo.PLUGIN_GUID).PatchAll();
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            new Harmony(MyPluginInfo.PLUGIN_GUID).PatchAll();
+            Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
         }
 
         private void Update()
@@ -28,7 +31,7 @@ namespace BetterWeaponHUDs
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (!FUPIndicator && GameObject.Find("/Canvas")?.transform is Transform canvasTF)
+            if (!FUPIndicator && GameObject.Find("/Canvas") is { transform: Transform canvasTF })
             {
                 FUPIndicator = Instantiate(Assets.LoadAsset<GameObject>("FUP Indicator"), canvasTF, false);
             }
