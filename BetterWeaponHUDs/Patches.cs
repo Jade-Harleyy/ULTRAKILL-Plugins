@@ -18,10 +18,8 @@ namespace BetterWeaponHUDs
         public static GameObject HardDamageNumber { get; private set; }
 
         public static GameObject CrosshairRailcannonSlider { get; private set; }
-        public static Transform CrosshairFistIcon { get; private set; }
+        public static Transform CrosshairFistIconFill { get; private set; }
         public static GameObject CrosshairWeaponIcon { get; private set; }
-
-        private static float PunchLastMaxCooldown = 1f;
 
         [HarmonyPatch(typeof(HudController), nameof(HudController.Awake)), HarmonyPostfix]
         private static void HudController_Awake(HudController __instance)
@@ -67,16 +65,17 @@ namespace BetterWeaponHUDs
                 CrosshairRailcannonSlider.SetActive(Settings.CrosshairRailcannonCharge);
 
                 RectTransform powerUpMeter = __instance.FindAsRect("PowerUpBar/HealthSliderAfterImage (2)");
-                powerUpMeter.sizeDelta = new(50f, 50f);
+                powerUpMeter.sizeDelta = new Vector2(50f, 50f);
                 powerUpMeter.GetComponent<Image>().fillClockwise = true;
                 powerUpMeter.GetComponent<Image>().fillOrigin = 4;
             }
 
-            if (!CrosshairFistIcon)
+            if (!CrosshairFistIconFill && HudController.Instance)
             {
                 GameObject crosshairFistObj = Plugin.Assets.LoadAsset<GameObject>("Fist Icon").Instantiate(__instance.transform, false);
                 FistControl.Instance.fistPanels = FistControl.Instance.fistPanels.AddToArray(crosshairFistObj);
-                (CrosshairFistIcon = crosshairFistObj.Find("Fill")).GetComponent<CopyImage>().imgToCopy = FistControl.Instance.fistIcon;
+                crosshairFistObj.GetComponent<CopyImage>().imgToCopy = HudController.Instance.fistBackground;
+                (CrosshairFistIconFill = crosshairFistObj.Find("Fill")).GetComponent<CopyImage>().imgToCopy = HudController.Instance.fistFill;
                 crosshairFistObj.SetActive(Settings.CrosshairFistIcon);
             }
 
@@ -108,10 +107,10 @@ namespace BetterWeaponHUDs
             __instance.meter.fillAmount /= 2f;
         }
 
-        [HarmonyPatch(typeof(HUDOptions), nameof(HUDOptions.WeaponIcon)), HarmonyPostfix]
-        private static void HUDOptions_WeaponIcon(bool stuff)
+        [HarmonyPatch(typeof(HUDSettings), nameof(HUDSettings.OnPrefChanged)), HarmonyPostfix]
+        private static void HUDSettings_OnPrefChanged(string key, object value)
         {
-            if (stuff) { FixSpeedometer(); }
+            if (key == "weaponIcons" && (bool)value) { FixSpeedometer(); }
         }
 
         [HarmonyPostfix]
@@ -143,12 +142,9 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(FistControl), nameof(FistControl.Update)), HarmonyPostfix]
         private static void FistControl_Update(FistControl __instance)
         {
-            if (!CrosshairFistIcon) { return; }
-            CrosshairFistIcon.GetComponent<Image>().fillAmount = Settings.FistCooldown ? 1f - __instance.fistCooldown / PunchLastMaxCooldown : 1f;
+            if (!CrosshairFistIconFill || !HudController.Instance) { return; }
+            CrosshairFistIconFill.GetComponent<Image>().fillAmount = HudController.Instance.fistFill.fillAmount;
         }
-        
-        [HarmonyPatch(typeof(Punch), nameof(Punch.PunchStart)), HarmonyPostfix]
-        private static void Punch_PunchStart(Punch __instance) => PunchLastMaxCooldown = __instance.fc.fistCooldown;
         
         [HarmonyPatch(typeof(StyleHUD), nameof(StyleHUD.GetLocalizedName)), HarmonyPostfix]
         private static void StyleHUD_GetLocalizedName(string id, string __result)

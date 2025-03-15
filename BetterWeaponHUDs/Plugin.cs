@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Linq;
 using BepInEx;
 using HarmonyLib;
+using JadeLib;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -29,7 +30,7 @@ namespace BetterWeaponHUDs
 
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (!FUPIndicator && GameObject.Find("/Canvas") is { transform: Transform canvasTF })
+            if (!FUPIndicator && GameObject.Find("/Canvas") is { transform: { } canvasTF })
             {
                 FUPIndicator = Assets.LoadAsset<GameObject>("FUP Indicator").Instantiate(canvasTF, false);
             }
