@@ -2,17 +2,17 @@
 {
     public static class GenericExtensions
     {
-        public static string GetRankText(int index, bool rich = false) => index switch
+        public static string GetRankText(int index) => index switch
         {
-            0 => rich ? "<color=blue>D</color>ESTRUCTIVE" : "DESTRUCTIVE",
-            2 => rich ? "<color=green>C</color>HAOTIC" : "CHAOTIC",
-            1 => rich ? "<color=yellow>B</color>RUTAL" : "BRUTAL",
-            3 => rich ? "<color=orange>A</color>NARCHIC" : "ANARCHIC",
-            4 => rich ? "<color=red>S</color>UPREME" : "SUPREME",
-            5 => rich ? "<color=red>SS</color>ADISTIC" : "SSADISTIC",
-            6 => rich ? "<color=red>SSS</color>HITSTORM" : "SSSHITSTORM",
-            7 => rich ? "<color=orange>ULTRAKILL</color>" : "ULTRAKILL",
-            _ => rich ? "<color=red><u>UNKNOWN</u></color>" : "UNKNOWN"
+            0 => "<color=blue>D</color>ESTRUCTIVE",
+            2 => "<color=green>C</color>HAOTIC",
+            1 => "<color=yellow>B</color>RUTAL",
+            3 => "<color=orange>A</color>NARCHIC",
+            4 => "<color=red>S</color>UPREME",
+            5 => "<color=red>SS</color>ADISTIC",
+            6 => "<color=red>SSS</color>HITSTORM",
+            7 => "<color=orange>ULTRAKILL</color>",
+            _ => "<color=red><u>UNKNOWN</u></color>"
         };
     }
 }
