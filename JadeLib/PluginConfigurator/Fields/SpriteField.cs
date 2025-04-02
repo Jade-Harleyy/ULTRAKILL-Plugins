@@ -3,32 +3,41 @@ using PluginConfig.API.Fields;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace JadeLib.PluginConfigurator
+namespace JadeLib.PluginConfigurator.Fields
 {
-    public class SpriteField(ConfigPanel parentPanel, Sprite sprite = null) : CustomConfigField(parentPanel)
+    public class SpriteField : CustomConfigField
     {
-        private Image currentUI;
+        private Image image;
 
-        private Sprite sprite = sprite;
+        private Sprite sprite;
         public Sprite Sprite
         {
             get => sprite;
-            set => SetSprite(sprite = value);
+            set
+            {
+                sprite = value;
+                SetSprite(value);
+            }
+        }
+
+        public SpriteField(ConfigPanel parentPanel, float height = 60f, Sprite sprite = null) : base(parentPanel)
+        {
+            this.sprite = sprite;
+            fieldHeight = height;
         }
 
         protected override void OnCreateUI(RectTransform fieldUI)
         {
-            currentUI = fieldUI.gameObject.AddComponent<Image>();
+            image = fieldUI.AddComponent<Image>();
+            image.preserveAspect = true;
             SetSprite(sprite);
         }
 
         private void SetSprite(Sprite sprite)
         {
-            currentUI?.gameObject.SetActive(sprite);
-            if (!currentUI || !sprite) { return; }
-
-            (currentUI.transform as RectTransform).sizeDelta = sprite.rect.size.x > 600f ? sprite.rect.size * (600f / sprite.rect.size.x) : sprite.rect.size;
-            currentUI.sprite = sprite;
+            if (!image) { return; }
+            image.gameObject.SetActive(sprite);
+            image.sprite = sprite;
         }
     }
 }

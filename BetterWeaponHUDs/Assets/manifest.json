@@ -1,0 +1,11 @@
+{
+  "name": "Better_Weapon_HUDs",
+  "description": "Weapon HUD improvements.",
+  "version_number": "{Version}",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2100",
+    "EternalsTeam-PluginConfigurator-1.10.2",
+    "Jade_Harley-JadeLib-1.2.0"
+  ],
+  "website_url": "https://github.com/Jade-Harleyy/ULTRAKILL-Plugins"
+}

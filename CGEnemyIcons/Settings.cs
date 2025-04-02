@@ -10,14 +10,14 @@ using UnityEngine.AddressableAssets;
 
 namespace CGEnemyIcons
 {
-    public enum OnDeath
+    internal enum OnDeath
     {
         Marker,
         Remove,
         RemoveIfAllDead
     }
 
-    public enum FilterType
+    internal enum FilterType
     {
         Both,
         RadiantOnly,
@@ -25,7 +25,7 @@ namespace CGEnemyIcons
         Off
     }
 
-    public static class Settings
+    internal static class Settings
     {
         private static EnumField<OnDeath> onDeath;
         public static OnDeath OnDeath => onDeath.value;
@@ -38,10 +38,10 @@ namespace CGEnemyIcons
 
         internal static void Initialize()
         {
-            PluginConfigurator config = PluginConfigurator.Create(PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_GUID);
+            PluginConfigurator config = PluginConfigurator.Create(MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_GUID);
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
-            onDeath = new(config.rootPanel, "ACTION ON DEATH", "onDeath", OnDeath.Marker);
+            onDeath = new EnumField<OnDeath>(config.rootPanel, "ACTION ON DEATH", "onDeath", OnDeath.Marker);
             onDeath.SetEnumDisplayName(OnDeath.Marker, "CROSS OUT");
             onDeath.SetEnumDisplayName(OnDeath.Remove, "REMOVE");
             onDeath.SetEnumDisplayName(OnDeath.RemoveIfAllDead, "REMOVE IF ALL DEAD");
@@ -59,7 +59,7 @@ namespace CGEnemyIcons
             void CreateCategory(EnemyCategory category, string categoryName)
             {
                 new ConfigHeader(config.rootPanel, categoryName, 18);
-                category.DoIf(T => T != category, T => hideCategories.Add(new(config.rootPanel, $"HIDE IF {T.Name().ToUpperInvariant()} ALIVE", $"hide{category.Name().ToLowerInvariant()}if{T.Name().ToLowerInvariant()}", false), (category, T)));
+                category.DoIf(T => T != category, T => hideCategories.Add(new BoolField(config.rootPanel, $"HIDE IF {T.Name().ToUpperInvariant()} ALIVE", $"hide{category.Name().ToLowerInvariant()}if{T.Name().ToLowerInvariant()}", false), (category, T)));
             }
 
             void AddEnemies(IEnumerable<EndlessEnemy> enemies, EnemyCategory category)

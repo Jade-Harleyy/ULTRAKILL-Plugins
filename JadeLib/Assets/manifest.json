@@ -1,0 +1,7 @@
+{
+  "name": "JadeLib",
+  "description": "Provides functions for my other mods.",
+  "version_number": "{Version}",
+  "dependencies": [],
+  "website_url": "https://github.com/Jade-Harleyy/ULTRAKILL-Plugins"
+}
