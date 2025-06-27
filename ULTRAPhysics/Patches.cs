@@ -1,6 +1,4 @@
-using System.Linq;
 using HarmonyLib;
-using Train;
 using UnityEngine;
 
 namespace ULTRAPhysics
@@ -9,11 +7,10 @@ namespace ULTRAPhysics
     internal static class Patches
     {
         [HarmonyPatch(typeof(PlayerMovementParenting), nameof(PlayerMovementParenting.DetachPlayer)), HarmonyPostfix]
-        private static void PlayerMovementParenting_DetachPlayer(Transform other, Transform ___deltaReceiver)
+        private static void PlayerMovementParenting_DetachPlayer(Transform other, PlayerMovementParenting __instance)
         {
-            if (other is null || ___deltaReceiver?.GetComponent<Rigidbody>() is not { } playerBody) { return; }
-            if ((Resources.FindObjectsOfTypeAll<Tram>().FirstOrDefault(parentTram => parentTram.connectedTrams.Contains(other.GetComponentInParent<ConnectedTram>())) ?? other.GetComponentInParent<Tram>()) is not { } tram) { return; }
-            playerBody.velocity += tram.transform.forward * tram.computedSpeed;
+            if (__instance.lockParent) { return; }
+            __instance.rb.AddForce(__instance.currentDelta / Time.fixedDeltaTime, ForceMode.VelocityChange);
         }
     }
 }
