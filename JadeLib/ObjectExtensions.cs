@@ -16,5 +16,6 @@ namespace JadeLib
         public static void SetParent(this GameObject gameObject, GameObject parent, bool worldPositionStays) => gameObject.transform.SetParent(parent.transform, worldPositionStays);
 
         public static T Instantiate<T>(this T original, Transform parent, bool worldPositionStays) where T : Object => Object.Instantiate(original, parent, worldPositionStays);
+        public static T Instantiate<T>(this T original, Vector3 worldPos) where T : Object => Object.Instantiate(original, worldPos, Quaternion.identity);
     }
 }
