@@ -17,3 +17,5 @@
 ### 1.2.1 | Minor Update
 - Added logging to ImageImporter.
 - Add additional extension methods.
+### 1.2.2 | Minor Bugfix
+- Fix issue with ImageImporter.

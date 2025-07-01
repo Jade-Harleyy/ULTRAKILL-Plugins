@@ -33,9 +33,7 @@ namespace JadeLib
                 else
                 {
                     error = Error.NoError;
-                    Sprite sprite = Sprite.Create(texture, new(0f, 0f, texture.width, texture.height), new(0.5f, 0.5f));
-                    Object.DestroyImmediate(texture);
-                    return sprite;
+                    return Sprite.Create(texture, new(0f, 0f, texture.width, texture.height), new(0.5f, 0.5f));
                 }
             }
 
