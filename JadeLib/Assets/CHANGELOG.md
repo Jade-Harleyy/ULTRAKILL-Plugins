@@ -14,3 +14,8 @@
 - Reorganize PluginConfigurator classes under the `JadeLib.PluginConfigurator` namespace.
 ### 1.2.0 | Minor Update
 - Update to ULTRA_Revamp.
+### 1.2.1 | Minor Update
+- Added logging to ImageImporter.
+- Add additional extension methods.
+### 1.2.2 | Minor Bugfix
+- Fix issue with ImageImporter.

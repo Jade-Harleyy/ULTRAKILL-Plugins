@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>DamageNumbers</AssemblyName>
+        <Version>1.0.0</Version>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.Core" Version="5.*"/>
+        <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+        <PackageReference Include="UnityEngine.Modules" Version="2022.3.29" IncludeAssets="compile" />
+    </ItemGroup>
+    <ItemGroup>
+      <Reference Include="Assembly-CSharp">
+        <HintPath>..\libs\Assembly-CSharp.dll</HintPath>
+        <Private>False</Private>
+      </Reference>
+      <Reference Include="PluginConfigurator">
+        <HintPath>..\libs\PluginConfigurator.dll</HintPath>
+        <Private>False</Private>
+      </Reference>
+      <Reference Include="Unity.TextMeshPro">
+        <HintPath>..\libs\Unity.TextMeshPro.dll</HintPath>
+        <Private>False</Private>
+      </Reference>
+      <Reference Include="UnityEngine.UI">
+        <HintPath>..\libs\UnityEngine.UI.dll</HintPath>
+        <Private>False</Private>
+      </Reference>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\JadeLib\JadeLib.csproj" Private="false"/>
+    </ItemGroup>
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Exec Command="mkdir &quot;$(TargetDir)$(TargetName) (Dev)&quot;&#xA;copy &quot;$(ProjectDir)Assets\*&quot; &quot;$(TargetDir)$(TargetName) (Dev)&quot;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(TargetDir)$(TargetName) (Dev)\$(TargetFileName)&quot;&#xA;powershell -Command &quot;(gc '$(TargetDir)$(TargetName) (Dev)\manifest.json') -replace '{Version}', '$(Version)' | Out-File '$(TargetDir)$(TargetName) (Dev)\manifest.json'&quot;&#xA;powershell Compress-Archive -Force -Path '$(TargetDir)$(TargetName) (Dev)/*' -DestinationPath '$(TargetDir)$(TargetName).zip'"/>
+    </Target>
+</Project>

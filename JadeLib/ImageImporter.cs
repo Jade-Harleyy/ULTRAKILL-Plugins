@@ -37,7 +37,26 @@ namespace JadeLib
                 }
             }
 
+            LogError(path, error);
             return null;
+        }
+
+        public static void LogError(string path, Error error)
+        {
+            string message = "Failed to load sprite";
+            message += error switch
+            {
+                Error.PathNullOrEmpty => " - No path provided.",
+                Error.FileMissing => $" - File at \"{path}\" does not exist or is protected.",
+                Error.FailedToLoad => $" - Failed to load texture from file at \"{path}\".",
+                _ => "."
+            };
+
+            string trace = StackTraceUtility.ExtractStackTrace();
+            trace = trace[trace.IndexOf('\n')..]; // remove trace extraction
+            message += $"\nStack trace:{trace}";
+            
+            Debug.LogWarning(message);
         }
     }
 }
