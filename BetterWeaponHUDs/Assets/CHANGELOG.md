@@ -1,10 +1,10 @@
-#### 1.0.0 | Initial Release
+### 1.0.0 | Initial Release
 - Weapon icon displays on the opposite side of the default HUD.
-#### 1.1.0 | Minor Update
+### 1.1.0 | Minor Update
 - The default HUD shows the current max HP.
-#### 1.1.1 | Minor Update
+### 1.1.1 | Minor Update
 - Updated icon; New icon by **untotentheo**.
-#### 1.2.0 | Major Update
+### 1.2.0 | Major Update
 - Add centerless version of the large crosshair.
 - Add crosshair railcannon charge bar.
 - Add configuration settings for all changes.
@@ -12,9 +12,12 @@
 - Fix railcannon charge displays not being disabled when no railcannons are equipped.
 - Fix hard damage indicator not working properly when "Always on Top" is disabled.
 - Fix the speedometer and weapon icon not appearing on the classic HUD.
-#### 1.3.0 | Major Update
+### 1.3.0 | Major Update
 - Add 'FUP' indicator.
 - Add support for custom style rank images. (Commissioned by **mothlematic**).
 - Add nullref checks in certain places.
 ### 1.4.0 | Minor Update
 - Update to ULTRA_Revamp.
+### 1.4.1 | Minor Update
+- Fix hard damage indicator ignoring the "Always on Top" setting until it's changed.
+- Add options to make the health and stamina indicators immediately react to changes.

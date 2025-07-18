@@ -32,6 +32,12 @@ namespace BetterWeaponHUDs
         #endregion
 
         #region Status HUD
+        private static BoolField instantHealthUpdate;
+        public static bool InstantHealthUpdate => instantHealthUpdate.value;
+        
+        private static BoolField instantStaminaUpdate;
+        public static bool InstantStaminaUpdate => instantStaminaUpdate.value;
+        
         private static BoolField hardDamageNumber;
         public static bool HardDamageNumber => hardDamageNumber.value;
 
@@ -90,6 +96,9 @@ namespace BetterWeaponHUDs
 
             #region Status HUD
             new ConfigHeader(config.rootPanel, "STATUS HUD");
+
+            instantHealthUpdate = new BoolField(config.rootPanel, "NO HEALTH UPDATE DELAY", "simple_hp", false);
+            instantStaminaUpdate = new BoolField(config.rootPanel, "NO STAMINA UPDATE DELAY", "simple_stamina", false);
 
             hardDamageNumber = new BoolField(config.rootPanel, "HARD DAMAGE INDICATOR", "show_hard_damage", false);
             hardDamageNumber.postValueChangeEvent += value => Patches.HardDamageNumber?.SetActive(value);

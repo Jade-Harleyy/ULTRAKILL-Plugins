@@ -16,13 +16,14 @@ namespace BetterWeaponHUDs
 
         private static GameObject AltGunCanvas { get; set; }
         public static GameObject HardDamageNumber { get; private set; }
+        public static TMP_Text HardDamageText { get; private set; }
 
         public static GameObject CrosshairRailcannonSlider { get; private set; }
         public static Transform CrosshairFistIconFill { get; private set; }
         public static GameObject CrosshairWeaponIcon { get; private set; }
 
-        [HarmonyPatch(typeof(HudController), nameof(HudController.Awake)), HarmonyPostfix]
-        private static void HudController_Awake(HudController __instance)
+        [HarmonyPatch(typeof(HudController), nameof(HudController.Start)), HarmonyPrefix]
+        private static void HudController_Start(HudController __instance)
         {
             if (__instance.altHud) { return; }
 
@@ -35,7 +36,7 @@ namespace BetterWeaponHUDs
             if (!HardDamageNumber)
             {
                 HardDamageNumber = Plugin.Assets.LoadAsset<GameObject>("Hard Damage").Instantiate(__instance.Find("GunCanvas/StatsPanel/Filler/Panel (2)/Filler"), false);
-                __instance.textElements = __instance.textElements.AddToArray(HardDamageNumber.GetComponent<TMP_Text>());
+                HardDamageText = HardDamageNumber.GetComponent<TMP_Text>();
                 HardDamageNumber.SetActive(Settings.HardDamageNumber);
             }
         }
@@ -163,6 +164,93 @@ namespace BetterWeaponHUDs
         {
             if (!HudController.Instance) { return; }
             HudController.Instance.speedometer.rect.anchoredPosition = Settings.AltIndicatorPosition ? altSpeedometerPos : speedometerPos;
+        }
+
+        [HarmonyPatch(typeof(HealthBar), nameof(HealthBar.Update)), HarmonyPrefix]
+        private static bool HealthBar_Update(HealthBar __instance)
+        {
+            if (!Settings.InstantHealthUpdate) { return true; }
+            
+            __instance.afterImageSliders?.Do(afterImageSlider => afterImageSlider.gameObject.SetActive(false));
+            __instance.hpSliders?.Do(hpSlider => hpSlider.value = NewMovement.Instance.hp);
+            if (__instance.antiHpSlider)
+            {
+                __instance.antiHpSlider.value = NewMovement.Instance.antiHp;
+                if (__instance.antiHpSliderFill) { __instance.antiHpSliderFill.enabled = __instance.antiHpSlider.value > 0f; }
+            }
+            if (__instance.hpText)
+            {
+                if (__instance.antiHpText)
+                {
+                    __instance.hpText.text = '/' + __instance.difficulty == 0 ? __instance.hpText.text = "200" : (100 - Mathf.RoundToInt(NewMovement.Instance.antiHp)).ToString();
+                }
+                else
+                {
+                    __instance.hpText.text = NewMovement.Instance.hp.ToString();
+                    if (__instance.changeTextColor)
+                    {
+                        __instance.hpText.color =
+                            NewMovement.Instance.hp switch
+                            {
+                                <= 30 => Color.red,
+                                <= 50 when __instance.yellowColor => Color.yellow,
+                                _ => __instance.normalTextColor
+                            };
+                    }
+                    else if (__instance.normalTextColor == Color.white)
+                    {
+                        __instance.hpText.color = NewMovement.Instance.hp <= 30
+                            ? Color.red
+                            : ColorBlindSettings.Instance.GetHudColor(HudColorType.healthText);
+                    }
+                }
+            }
+            return false;
+        }
+
+        [HarmonyPatch(typeof(StaminaMeter), nameof(StaminaMeter.Update)), HarmonyPrefix]
+        private static bool StaminaMeter_Update(StaminaMeter __instance)
+        {
+            if (!Settings.InstantStaminaUpdate) { return true; }
+            
+            if (!__instance.alwaysUpdate && (!__instance.parentCanvas || !__instance.parentCanvas.enabled)) { return false; }
+            if (__instance.stm)
+            {
+                __instance.stm.value = NewMovement.Instance.boostCharge;
+                if (__instance.stm.value >= __instance.stm.maxValue)
+                {
+                    if (!__instance.full) { __instance.Flash(); }
+                    __instance.staminaBar.color = __instance.origColor;
+                    __instance.full = true;
+                }
+                else
+                {
+                    __instance.staminaBar.color = __instance.emptyColor;
+                    __instance.full = false;
+                }
+                if (__instance.flashColor.a > 0f)
+                {
+                    __instance.flashColor.a = Mathf.MoveTowards(__instance.flashColor.a, 0f, Time.deltaTime);
+                    __instance.staminaFlash.color = __instance.flashColor;
+                }
+            }
+            if (__instance.stmText)
+            {
+                __instance.stmText.text = (NewMovement.Instance.boostCharge / 100f).ToString("0.00");
+                if (__instance.changeTextColor)
+                {
+                    __instance.stmText.color = NewMovement.Instance.boostCharge < 100f
+                        ? Color.red
+                        : MonoSingleton<ColorBlindSettings>.Instance.GetHudColor(HudColorType.stamina);
+                }
+                else if (__instance.normalTextColor == Color.white)
+                {
+                    __instance.stmText.color = NewMovement.Instance.boostCharge < 100f
+                        ? Color.red
+                        : MonoSingleton<ColorBlindSettings>.Instance.GetHudColor(HudColorType.healthText);
+                }
+            }
+            return false;
         }
     }
 }
