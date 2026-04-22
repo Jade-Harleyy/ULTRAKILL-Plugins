@@ -45,13 +45,13 @@ namespace BetterWeaponHUDs
         private static void HudController_CheckSituation(HudController __instance)
         {
             if (__instance.altHud || !AltGunCanvas) { return; }
-            AltGunCanvas.GetComponent<Canvas>().enabled = !HideUI.Active && PrefsManager.Instance.GetInt("hudType") == 1;
+            AltGunCanvas.GetComponent<Canvas>().enabled = !HideUI.Active && PrefsManager.Instance!.GetInt("hudType") == 1;
         }
 
         [HarmonyPatch(typeof(RailcannonMeter), nameof(RailcannonMeter.CheckStatus)), HarmonyPostfix]
         private static void RailcannonMeter_CheckStatus(RailcannonMeter __instance)
         {
-            if (!PrefsManager.Instance.GetBool("weaponIcons") || !Settings.AltIndicatorPosition && !Settings.ForceAltRailcannonCharge) { return; }
+            if (!PrefsManager.Instance!.GetBool("weaponIcons") || !Settings.AltIndicatorPosition && !Settings.ForceAltRailcannonCharge) { return; }
 
             __instance.self.enabled = false;
             __instance.miniVersion.SetActive(__instance.RailcannonStatus());
@@ -71,7 +71,7 @@ namespace BetterWeaponHUDs
                 powerUpMeter.GetComponent<Image>().fillOrigin = 4;
             }
 
-            if (!CrosshairFistIconFill && HudController.Instance)
+            if (!CrosshairFistIconFill && FistControl.Instance && HudController.Instance)
             {
                 GameObject crosshairFistObj = Plugin.Assets.LoadAsset<GameObject>("Fist Icon").Instantiate(__instance.transform, false);
                 FistControl.Instance.fistPanels = FistControl.Instance.fistPanels.AddToArray(crosshairFistObj);
@@ -82,7 +82,6 @@ namespace BetterWeaponHUDs
 
             if (!CrosshairWeaponIcon)
             {
-                if (!WeaponHUD.Instance) { Object.FindObjectOfType<WeaponHUD>()?.Awake(); }
                 CrosshairWeaponIcon = Plugin.Assets.LoadAsset<GameObject>("Weapon Icon").Instantiate(__instance.transform, false);
                 CrosshairWeaponIcon.SetActive(Settings.CrosshairWeaponIcon);
             }
@@ -99,6 +98,7 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(PowerUpMeter), nameof(PowerUpMeter.UpdateMeter)), HarmonyPostfix]
         private static void PowerUpMeter_UpdateMeter(PowerUpMeter __instance)
         {
+            if (!WeaponCharges.Instance) { return; }
             if (!CrosshairRailcannonSlider || !Settings.CrosshairRailcannonCharge) { return; }
 
             Image rcSlider = CrosshairRailcannonSlider.GetComponent<Image>();
@@ -121,20 +121,6 @@ namespace BetterWeaponHUDs
         {
             if (Settings.CustomStyleImages.Length <= __instance.rankIndex || Settings.CustomStyleImages[__instance.rankIndex] is not { } sprite) { return; }
             __instance.rankImage.sprite = sprite;
-        }
-
-        [HarmonyPatch(typeof(NewMovement), nameof(NewMovement.Update)), HarmonyPostfix]
-        private static void NewMovement_Update(NewMovement __instance)
-        {
-            if (!Settings.ViewmodelAcceleration)
-            {
-                __instance.hudCam.transform.localPosition = __instance.camOriginalPos;
-            }
-
-            if (!Settings.HUDAcceleration)
-            {
-                __instance.screenHud.transform.localPosition = __instance.hudOriginalPos;
-            }
         }
 
         [HarmonyPatch(typeof(WalkingBob), nameof(WalkingBob.Awake)), HarmonyPostfix]
@@ -169,6 +155,7 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(HealthBar), nameof(HealthBar.Update)), HarmonyPrefix]
         private static bool HealthBar_Update(HealthBar __instance)
         {
+            if (!NewMovement.Instance) { return true; }
             if (!Settings.InstantHealthUpdate) { return true; }
             
             __instance.afterImageSliders?.Do(afterImageSlider => afterImageSlider.gameObject.SetActive(false));
@@ -211,6 +198,7 @@ namespace BetterWeaponHUDs
         [HarmonyPatch(typeof(StaminaMeter), nameof(StaminaMeter.Update)), HarmonyPrefix]
         private static bool StaminaMeter_Update(StaminaMeter __instance)
         {
+            if (!NewMovement.Instance) { return true; }
             if (!Settings.InstantStaminaUpdate) { return true; }
             
             if (!__instance.alwaysUpdate && (!__instance.parentCanvas || !__instance.parentCanvas.enabled)) { return false; }

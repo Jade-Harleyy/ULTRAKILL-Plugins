@@ -30,7 +30,7 @@ namespace BetterWeaponHUDs
             FUPIndicator?.SetActive(Settings.FUPAlert && HookArm.Instance is { returning: true } hookArm && hookArm.caughtObjects.Any(rb => rb && rb.TryGetComponent<Grenade>(out _)));
             if (!Patches.HardDamageText || !HudController.Instance) { return; }
             // the material is automatically reset to the original the first time its changed (WHY???) so we have to do this shit (pmo)
-            Patches.HardDamageText.fontSharedMaterial = PrefsManager.Instance.GetBool("hudAlwaysOnTop") ? HudController.Instance.overlayTextMaterial : HudController.Instance.normalTextMaterial;
+            Patches.HardDamageText.fontSharedMaterial = PrefsManager.Instance!.GetBool("hudAlwaysOnTop") ? HudController.Instance.overlayTextMaterial : HudController.Instance.normalTextMaterial;
         }
 
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)

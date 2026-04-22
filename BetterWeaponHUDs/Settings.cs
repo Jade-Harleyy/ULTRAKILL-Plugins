@@ -14,15 +14,12 @@ namespace BetterWeaponHUDs
     internal static class Settings
     {
         #region HUD
-        private static BoolField hudAcceleration;
-        public static bool HUDAcceleration => hudAcceleration.value;
-
         #region Crosshair HUD
         private static BoolField alternateCrosshair;
         public static bool AlternateCrosshair => alternateCrosshair.value;
 
         private static BoolField crosshairRailcannonCharge;
-        public static bool CrosshairRailcannonCharge => crosshairRailcannonCharge.value && RailcannonMeter.Instance.RailcannonStatus();
+        public static bool CrosshairRailcannonCharge => crosshairRailcannonCharge.value && RailcannonMeter.Instance && RailcannonMeter.Instance.RailcannonStatus();
 
         private static BoolField crosshairFistIcon;
         public static bool CrosshairFistIcon => crosshairFistIcon.value;
@@ -65,9 +62,6 @@ namespace BetterWeaponHUDs
         #region Viewmodel
         private static BoolField walkingBob;
         public static bool WalkingBob => walkingBob.value;
-
-        private static BoolField viewmodelAcceleration;
-        public static bool ViewmodelAcceleration => viewmodelAcceleration.value;
         #endregion
 
         internal static void Initialize(Plugin plugin)
@@ -76,8 +70,6 @@ namespace BetterWeaponHUDs
             config.icon = Plugin.Assets.LoadAsset<Sprite>("Icon");
 
             #region HUD
-            hudAcceleration = new BoolField(config.rootPanel, "HUD FOLLOWS SPEED", "hudacceleration", true);
-
             #region Crosshair HUD
             new ConfigHeader(config.rootPanel, "CROSSHAIR HUD");
 
@@ -156,8 +148,8 @@ namespace BetterWeaponHUDs
             plugin.StartCoroutine(AddStyleBonuses());
             static IEnumerator AddStyleBonuses()
             {
-                yield return new WaitUntil(() => StyleHUD.Instance && PrefsManager.Instance);
-                PrefsManager.Instance.localPrefMap.DoIf(pair => pair.Key.StartsWith(DefaultStyleGUID), pair =>
+                yield return new WaitUntil(() => StyleHUD.Instance);
+                PrefsManager.Instance!.localPrefMap.DoIf(pair => pair.Key.StartsWith(DefaultStyleGUID), pair =>
                 {
                     AddStyleBonusEntry(pair.Key[DefaultStyleGUID.Length..]);
                 });
@@ -180,8 +172,6 @@ namespace BetterWeaponHUDs
                 bob.enabled = value;
                 bob.transform.localPosition = Vector3.zero;
             };
-
-            viewmodelAcceleration = new BoolField(config.rootPanel, "WEAPONS FOLLOW SPEED", "viewmodelacceleration", true);
             #endregion
         }
 
@@ -191,18 +181,21 @@ namespace BetterWeaponHUDs
 
             if (defaultValue == null)
             {
-                defaultValue = PrefsManager.Instance.GetStringLocal(DefaultStyleGUID + id, id);
+                defaultValue = PrefsManager.Instance!.GetStringLocal(DefaultStyleGUID + id, id);
             }
             else
             {
-                PrefsManager.Instance.SetStringLocal(DefaultStyleGUID + id, defaultValue);
+                PrefsManager.Instance!.SetStringLocal(DefaultStyleGUID + id, defaultValue);
             }
             
             StringField stringField = new(customStyleBonusesDivision, defaultValue.IsNullOrWhiteSpace() ? id : defaultValue, "customstylebonus_" + id, defaultValue, true);
-            stringField.postValueChangeEvent += SetStyleBonusText;
-            SetStyleBonusText(stringField.value);
+            if (StyleHUD.Instance)
+            {
+                stringField.postValueChangeEvent += SetStyleBonusText;
+                SetStyleBonusText(stringField.value);
+            }
             
-            void SetStyleBonusText(string text) => StyleHUD.Instance.idNameDict.TrySetValue(id, text, true);
+            void SetStyleBonusText(string text) => StyleHUD.Instance!.idNameDict.TrySetValue(id, text, true);
         }
     }
 }

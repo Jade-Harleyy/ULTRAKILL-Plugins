@@ -21,3 +21,5 @@
 ### 1.4.1 | Minor Update
 - Fix hard damage indicator ignoring the "Always on Top" setting until it's changed.
 - Add options to make the health and stamina indicators immediately react to changes.
+### 1.5.0 | Minor Update
+- Update to FRAUD patch 17d3.
